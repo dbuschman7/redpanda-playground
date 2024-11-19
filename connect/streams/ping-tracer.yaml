@@ -1,0 +1,47 @@
+input:
+  label: "ping_tracer"
+  generate:
+    mapping: |
+      root.ts = now()
+      root.unix = timestamp_unix()
+    interval: 1s
+    count: 0
+    batch_size: 1
+    auto_replay_nacks: true
+    
+pipeline:
+  processors:
+    - mapping: root = this
+
+output:
+  kafka_franz:
+    seed_brokers: 
+      - localhost:19092
+    topic: "ping-tracer" # No default (required)
+    key: "localhost" # No default (optional)
+    partitioner: "round_robin" 
+    client_id: ping-tracer-localhost
+    rack_id: "localhost"
+    idempotent_write: true
+    metadata:
+      include_prefixes: []
+      include_patterns: []
+    max_in_flight: 10
+    timeout: 10s
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: [] # No default (optional)
+    max_message_bytes: 1MB
+    compression: "snappy" # No default (optional)
+    tls:
+      enabled: false
+      skip_cert_verify: false
+      enable_renegotiation: false
+      root_cas: ""
+      root_cas_file: ""
+      client_certs: []
+    sasl: [] # No default (optional)
+    timestamp: ${! timestamp_unix() } 

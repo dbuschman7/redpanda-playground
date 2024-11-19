@@ -1,0 +1,54 @@
+
+http:
+  enabled: true
+  address: 0.0.0.0:4195
+  root_path: /connect
+  debug_endpoints: true 
+input:
+  label: "generators"
+  broker:
+    inputs:
+      - generate:
+          mapping: root = "hello world " + now() # No default (required)
+          interval: 1s
+          count: 0
+          batch_size: 1
+          auto_replay_nacks: true
+      - generate:
+          mapping: root = "[WIN] hello world " + now() # No default (required)
+          interval: 3s
+          count: 0
+          batch_size: 1
+          auto_replay_nacks: true
+
+pipeline:
+  processors:
+    - mapping: |
+        root.msg = content().string()
+        root.ts = now()
+
+buffer:
+  system_window:
+    timestamp_mapping: root = now()
+    size: 5s
+    allowed_lateness: 0s
+
+output:
+  broker:
+    outputs:
+      - file:
+          path: /Users/dave/dev/redpanda/brokers-3/data/${! timestamp_unix() }.txt # No default (required)
+          codec: lines
+        processors:
+          - mapping: | 
+             if this.msg.contains("[WIN]") { root = deleted() } else { root = this.msg }    
+      - file:
+          path: /Users/dave/dev/redpanda/brokers-3/data/win-${! timestamp_unix() }.txt # No default (required)
+          codec: lines  
+        processors:
+          - mapping: | 
+             if this.msg.contains("[WIN]") { root = this } else { root = deleted() }          
+
+metrics:
+  prometheus: {}
+  mapping: ""
