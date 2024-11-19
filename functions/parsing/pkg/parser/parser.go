@@ -23,8 +23,7 @@ type Empty struct{}
 
 // Errors returned by Parse[T]
 var (
-	ErrNoMatch = errors.New("no match") // When parsing outright failed.
-
+	ErrNoMatch         = errors.New("no match")         // When parsing outright failed.
 	ErrUnconsumedInput = errors.New("unconsumed input") // When parsing succeeded but didn't consume all the input.
 )
 

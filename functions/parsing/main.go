@@ -72,7 +72,7 @@ func convIntParser() convert {
 
 func syslogParser() convert {
 	return func(data string) (parser.Bindings, error) {
-		return nil, errors.New("Not implemented")
+		return nil, errors.New("not implemented")
 	}
 }
 

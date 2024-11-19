@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-
 	"dave.internal/pkg/parser"
 )
 
@@ -47,32 +45,10 @@ type ConfigParsers struct {
 func IntBoolParser() ConfigParsers {
 	var p ConfigParsers
 
-	p.trueParser = parser.Map(
-		parser.Exactly("true"),
-		func(parser.Empty) bool {
-			return true
-		})
-
-	p.falseParser = parser.Map(
-		parser.Exactly("false"),
-		func(parser.Empty) bool { return false })
-
-	p.boolParser = parser.OneOf(
-		p.trueParser,
-		p.falseParser)
-
-	p.intParser = parser.AndThen(parser.GetString(parser.ConsumeSome(isDecimalDigit)),
-		func(digits string) parser.Parser[int] {
-			if len(digits) > 1 && digits[0] == '0' {
-				return parser.Fail[int]
-			}
-			v, err := strconv.Atoi(digits)
-			if err != nil {
-				return parser.Fail[int]
-			}
-			return parser.Succeed(v)
-		},
-	)
+	p.trueParser = TrueParser
+	p.falseParser = FalseParser
+	p.boolParser = BoolParser
+	p.intParser = IntParser
 
 	p.valueParser = parser.OneOf(
 		parser.Map(p.boolParser,
@@ -85,15 +61,8 @@ func IntBoolParser() ConfigParsers {
 			}),
 	)
 
-	p.nameParser = parser.GetString(
-		parser.AndThen(
-			parser.ConsumeIf(isAsciiLetter),
-			func(parser.Empty) parser.Parser[parser.Empty] {
-				return parser.ConsumeWhile(isAlphaNum)
-			},
-		))
-
-	p.whitespaceParser = parser.ConsumeWhile(isWhitespace)
+	p.nameParser = NameParser
+	p.whitespaceParser = WhitespaceSkipParser
 
 	{
 		s := parser.StartKeeping(p.nameParser)
