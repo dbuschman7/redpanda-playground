@@ -1,0 +1,31 @@
+input:
+  label: "ping_tracer"
+  generate:
+    mapping: |
+      root.ts = now()
+      root.unix = timestamp_unix()
+    interval: 1s
+    count: 0
+    batch_size: 400
+    auto_replay_nacks: true
+    
+buffer: 
+  memory:
+    limit: 524288000
+    batch_policy:
+      enabled: true
+      count: 65000
+      byte_size: 52428800
+      period: "3s"
+
+pipeline:
+  processors:
+    - mapping: "root = content()"
+
+output:
+  broker:
+    pattern: fan_out
+    outputs: 
+    - inproc: "cluster_1"    
+    - inproc: "cluster_2"
+  
