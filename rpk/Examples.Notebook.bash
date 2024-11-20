@@ -1,40 +1,20 @@
-# Examples 
-
-## clsuter Health
-```shell
+# # Examples 
+# # Cluster Health
 rpk cluster health
 rpk redparpk redpanda admin brokers list
 
-```
-
-### create a topic 
-```shell
+# ## create a topic 
 rpk topic create win-some -p 6 -r 1 
 rpk topic create some-more -p 6 -r 1
-```
-
-### List partitions
-```shell
+# ## List partitions
 rpk redpanda admin partitions list 2
-```
-
 # Run Single Connect Service 
-```shell
 clear ; rpk connect run generate.yaml
-```
-
 # Run Rpk in streams mode 
-```shell
 clear; rpk connect streams server.yaml streams/*.yaml 
-```
-
 # Json 
-```shell
 curl http://localhost:18082/topics 
-```
-
 # List Partitions
-```shell
 curl -s \
    -X 'GET' \
   'http://localhost:18082/offsets' \
@@ -56,5 +36,3 @@ curl -s \
     { "topic": "some-more", "partition": 5 },
   ]
 }'
-
-```
