@@ -1,4 +1,4 @@
-package main
+package intBool
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestValueParser(t *testing.T) {
-	p := IntBoolParser()
+	p := IntBoolMappingParser()
 	r, err := parser.Parse(p.valueParser, "true")
 	if err != nil {
 		t.Errorf("ValueParser failed: %v", err)
@@ -29,7 +29,7 @@ func TestValueParser(t *testing.T) {
 }
 
 func TestBindingParser(t *testing.T) {
-	p := IntBoolParser()
+	p := IntBoolMappingParser()
 	r, err := parser.Parse(p.bindingParser, "name = true")
 	if err != nil {
 		t.Errorf("BindingParser failed: %v", err)
@@ -44,7 +44,7 @@ func TestBindingParser(t *testing.T) {
 }
 
 func TestBindingsParser(t *testing.T) {
-	p := IntBoolParser()
+	p := IntBoolMappingParser()
 	r, err := parser.Parse(p.bindingsParser, "name1 = true, name2 = 123")
 	if err != nil {
 		t.Errorf("BindingsParser failed: %v", err)
@@ -56,7 +56,7 @@ func TestBindingsParser(t *testing.T) {
 }
 
 func TestConfigurationParser(t *testing.T) {
-	p := IntBoolParser()
+	p := IntBoolMappingParser()
 	r, err := parser.Parse(p.ConfigurationParser, "[name1 = true, name2 = 123 ]")
 	if err != nil {
 		t.Errorf("ConfigurationParser failed: %v", err)

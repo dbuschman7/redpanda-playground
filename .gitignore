@@ -24,3 +24,4 @@ go.work.sum
 # env file
 .env
 functions/parsing/dave.internal
+connect/streams/tmp

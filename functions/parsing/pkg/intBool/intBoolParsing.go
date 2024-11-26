@@ -1,4 +1,4 @@
-package main
+package intBool
 
 import (
 	"dave.internal/pkg/parser"
@@ -23,13 +23,13 @@ import (
 //
 //	whitespace: [ \t\n]*
 //
-// IntBoolParser returns a ConfigParsers structure containing the
+// IntBoolMappingParser returns a ConfigParsers structure containing the
 // ConfigurationParser that you actually want to pass to Parse
 // if you want to parse the Configuration format.
 // NewConfigParser returns this struct.  The sole exported field is the Parser for the
 // entire configuration format.  The unexported fields contain subcomponent parsers
 // for mutual reference and (ideally) internal testing.
-type ConfigParsers struct {
+type IntBoolMappingParsers struct {
 	trueParser          parser.Parser[bool]
 	falseParser         parser.Parser[bool]
 	boolParser          parser.Parser[bool]
@@ -42,13 +42,13 @@ type ConfigParsers struct {
 	ConfigurationParser parser.Parser[[]parser.Binding]
 }
 
-func IntBoolParser() ConfigParsers {
-	var p ConfigParsers
+func IntBoolMappingParser() IntBoolMappingParsers {
+	var p IntBoolMappingParsers
 
-	p.trueParser = TrueParser
-	p.falseParser = FalseParser
-	p.boolParser = BoolParser
-	p.intParser = IntParser
+	p.trueParser = parser.TrueParser
+	p.falseParser = parser.FalseParser
+	p.boolParser = parser.BoolParser
+	p.intParser = parser.IntParser
 
 	p.valueParser = parser.OneOf(
 		parser.Map(p.boolParser,
@@ -61,8 +61,8 @@ func IntBoolParser() ConfigParsers {
 			}),
 	)
 
-	p.nameParser = NameParser
-	p.whitespaceParser = WhitespaceSkipParser
+	p.nameParser = parser.NameParser
+	p.whitespaceParser = parser.WhitespaceSkipParser
 
 	{
 		s := parser.StartKeeping(p.nameParser)

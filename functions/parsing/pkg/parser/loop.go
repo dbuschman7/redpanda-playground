@@ -16,7 +16,7 @@ type Step[A any, T any] struct {
 // is not set, Loop will iterate with the new Accum value from the Step.  If the Step's Done flag
 // is set, Loop will complete by returning the T value from the Step.
 func Loop[A any, T any](startAccum A, stepper func(A) Parser[Step[A, T]]) Parser[T] {
-	return func(initial state) (T, state, error) {
+	return func(initial State) (T, State, error) {
 		accum := startAccum
 		currentState := initial
 		for {

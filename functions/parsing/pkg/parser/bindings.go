@@ -27,7 +27,7 @@ type BindingBool bool
 func (BindingBool) IsBindingValue() {}
 
 // BindingString is a wrapper on bool to implement the BindingValue interface.
-type BindingString bool
+type BindingString string
 
 // The marker method to be a BindingValue
 func (BindingString) IsBindingValue() {}

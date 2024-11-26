@@ -4,8 +4,8 @@ package parser
 // and AppendKeeping.  They are principally passed as arguments to Apply, Apply2, and so on.
 // Users usually won't need to write out signatures involving Seq explicitly.
 type Seq[T any, U any] struct {
-	first  T
-	second U
+	First  T
+	Second U
 }
 
 // StartKeeping[T] returns a sequence Parser which, on success, produces a single-element sequence that
@@ -13,7 +13,7 @@ type Seq[T any, U any] struct {
 // is a detail that users should be able to ignore most of the time.
 func StartKeeping[T any](parser Parser[T]) Parser[Seq[Empty, T]] {
 	return Map(parser, func(t T) Seq[Empty, T] {
-		return Seq[Empty, T]{first: Empty{}, second: t}
+		return Seq[Empty, T]{First: Empty{}, Second: t}
 	})
 }
 
@@ -32,7 +32,7 @@ func StartSkipping[T any](parser Parser[T]) Parser[Empty] {
 // A user could pass a parserT argument which doesn't produce a sequence, but the result would
 // not work with ApplyN functions so it's hard to imagine the use case.
 func AppendKeeping[T any, U any](parserT Parser[T], parserU Parser[U]) Parser[Seq[T, U]] {
-	return func(initial state) (Seq[T, U], state, error) {
+	return func(initial State) (Seq[T, U], State, error) {
 		t, next, err := parserT(initial)
 		if err != nil {
 			var zero Seq[T, U]
@@ -43,7 +43,7 @@ func AppendKeeping[T any, U any](parserT Parser[T], parserU Parser[U]) Parser[Se
 			var zero Seq[T, U]
 			return zero, initial, err
 		}
-		return Seq[T, U]{first: t, second: u}, final, nil
+		return Seq[T, U]{First: t, Second: u}, final, nil
 	}
 }
 
@@ -53,7 +53,7 @@ func AppendKeeping[T any, U any](parserT Parser[T], parserU Parser[U]) Parser[Se
 // A user could pass a parserT argument which doesn't produce a sequence, but the result would
 // not work with ApplyN functions so it's hard to imagine the use case.
 func AppendSkipping[T any, U any](parserT Parser[T], parserU Parser[U]) Parser[T] {
-	return func(initial state) (T, state, error) {
+	return func(initial State) (T, State, error) {
 		t, next, err := parserT(initial)
 		if err != nil {
 			var zero T
@@ -72,13 +72,13 @@ func AppendSkipping[T any, U any](parserT Parser[T], parserU Parser[U]) Parser[T
 // a single-element sequence.  The resulting parser transforms the single value from the sequence
 // using the argument mapper function.
 func Apply[T any, A any](parser Parser[Seq[Empty, T]], mapper func(T) A) Parser[A] {
-	return func(initial state) (A, state, error) {
+	return func(initial State) (A, State, error) {
 		seq, next, err := parser(initial)
 		if err != nil {
 			var zero A
 			return zero, initial, err
 		}
-		return mapper(seq.second), next, nil
+		return mapper(seq.Second), next, nil
 	}
 }
 
@@ -86,13 +86,13 @@ func Apply[T any, A any](parser Parser[Seq[Empty, T]], mapper func(T) A) Parser[
 // a two-element sequence.  The resulting parser transforms the two values from the sequence
 // into the final result value using the argument mapper function.
 func Apply2[T any, U any, A any](parser Parser[Seq[Seq[Empty, T], U]], mapper func(T, U) A) Parser[A] {
-	return func(initial state) (A, state, error) {
+	return func(initial State) (A, State, error) {
 		seq, next, err := parser(initial)
 		if err != nil {
 			var zero A
 			return zero, initial, err
 		}
-		return mapper(seq.first.second, seq.second), next, nil
+		return mapper(seq.First.Second, seq.Second), next, nil
 	}
 }
 
@@ -100,12 +100,12 @@ func Apply2[T any, U any, A any](parser Parser[Seq[Seq[Empty, T], U]], mapper fu
 // a three-element sequence.  The resulting parser transforms the three values from the sequence
 // into the final result value using the argument mapper function.
 func Apply3[T any, U any, V any, A any](parser Parser[Seq[Seq[Seq[Empty, T], U], V]], mapper func(T, U, V) A) Parser[A] {
-	return func(initial state) (A, state, error) {
+	return func(initial State) (A, State, error) {
 		seq, next, err := parser(initial)
 		if err != nil {
 			var zero A
 			return zero, initial, err
 		}
-		return mapper(seq.first.first.second, seq.first.second, seq.second), next, nil
+		return mapper(seq.First.First.Second, seq.First.Second, seq.Second), next, nil
 	}
 }
