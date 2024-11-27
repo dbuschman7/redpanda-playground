@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	"dave.internal/pkg/intBool"
 	"dave.internal/pkg/parser"
 )
 
@@ -55,6 +56,12 @@ func writeBindings(bindings []parser.Binding, err error) {
 				buffer.WriteString("\"=\"")
 				buffer.WriteString(strconv.FormatBool(bool(v)))
 				buffer.WriteString("\"")
+			case parser.BindingString:
+				buffer.WriteString("\"")
+				buffer.WriteString(b.Name)
+				buffer.WriteString("\"=\"")
+				buffer.WriteString(string(v))
+				buffer.WriteString("\"")
 			}
 
 		}
@@ -64,7 +71,7 @@ func writeBindings(bindings []parser.Binding, err error) {
 }
 
 func convIntParser() convert {
-	p := IntBoolParser()
+	p := intBool.IntBoolMappingParser()
 	return func(data string) (parser.Bindings, error) {
 		return parser.Parse(p.ConfigurationParser, data)
 	}
@@ -83,7 +90,7 @@ func main() {
 	switch len(args) {
 	case 1:
 		const data = `[ foo =42, bar=true, baz = false]`
-		p := IntBoolParser()
+		p := intBool.IntBoolMappingParser()
 		writeBindings(parser.Parse(p.ConfigurationParser, data))
 
 	case 2:
