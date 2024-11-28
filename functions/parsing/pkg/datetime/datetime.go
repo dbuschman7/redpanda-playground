@@ -199,13 +199,16 @@ var monthAsciiParser = AndThen(
 	},
 )
 
-func Syslog3164Parser() Parser[string] {
+func Syslog3164DateTimeParser() Parser[string] {
 	w := StartSkipping(WhitespaceSkipParser)
 	s1 := AppendKeeping(w, monthAsciiParser)
-	s2 := AppendSkipping(s1, WhitespaceSkipParser)
-	s3 := AppendKeeping(s2, time8601Support)
+	wh1 := AppendSkipping(s1, WhitespaceSkipParser)
+	d1 := AppendKeeping(wh1, GetString(ConsumeSome(IsDecimalDigit)))
+	wh2 := AppendSkipping(d1, WhitespaceSkipParser)
+	s3 := AppendKeeping(wh2, time8601Support())
 
-	return Apply2(s3, func(month string, day int, time string) string {
-		return fmt.Sprintf("%s %02d %s", month, day, time)
+	return Apply3(s3, func(month string, day string, time string) string {
+		return fmt.Sprintf("%s %s %s", month, day, time)
 	})
+
 }

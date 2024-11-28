@@ -176,3 +176,28 @@ func TestISO8601Parser(t *testing.T) {
 	}
 
 }
+
+func TestSyslog3164DateTimeParser(t *testing.T) {
+	p := Syslog3164DateTimeParser()
+
+	// Test a valid date
+	r, err := parser.Parse(p, "Jan  2 15:04:05")
+	if err != nil {
+		t.Errorf("Syslog3164DateTimeParser failed: %v", err)
+	}
+	if r != "Jan  2 15:04:05" {
+		t.Errorf("Syslog3164DateTimeParser failed: %v", r)
+	}
+
+	// Test an invalid date
+	_, err = parser.Parse(p, "Jan  2 15:04:05+01")
+	if err == nil {
+		t.Errorf("Syslog3164DateTimeParser failed: %v", err)
+	}
+
+	// Test an unrecognized date
+	_, err = parser.Parse(p, "Jan  2 15:04:05+01")
+	if err == nil {
+		t.Errorf("Syslog3164DateTimeParser failed: %v", err)
+	}
+}

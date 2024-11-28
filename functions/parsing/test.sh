@@ -1,15 +1,19 @@
 #! /bin/bash 
 
+APP_NAME=syslog_pre_parse
+
 cat <<EOF > /tmp/test.txt
 [ foo =42, bar=true, baz = false]
 [ foo =42, bar=true, baz = false]
 [ foo =42, bar=true, baz = false]
 [ foo =42, bar=true, baz = false]
 EOF
-go build . 
+go build -o $APP_NAME  . 
 
 echo "*****************************************************************************************"
-cat /tmp/test.txt | ./dave.internal intBool | tee /tmp/test2.txt
+ls -l $APP_NAME
 echo "*****************************************************************************************"
-cat /tmp/test2.txt 
+cat /tmp/test.txt | ./$APP_NAME intBool | tee /tmp/test2.txt
+echo "*****************************************************************************************"
+echo "File length - " $( cat /tmp/test2.txt | wc -l ) 
 echo "*****************************************************************************************"

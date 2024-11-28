@@ -6,68 +6,28 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 
 	"dave.internal/pkg/intBool"
 	"dave.internal/pkg/parser"
+
+	"github.com/redpanda-data/redpanda/src/transform-sdk/go/transform"
 )
 
 type convert func(string) (parser.Bindings, error)
+
+var buffer bytes.Buffer
 
 func pipedStdin(fn convert) error {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		bindings, err := fn(scanner.Text())
-		writeBindings(bindings, err)
+		var line = scanner.Text()
+		bindings, err := fn(line)
+		buffer.Reset()
+		parser.WriteBindingsAsJson(&buffer, line, bindings, err)
+		fmt.Printf("%s\n", buffer.String())
 	}
-
 	return scanner.Err()
-}
-
-var buffer bytes.Buffer
-
-func writeBindings(bindings []parser.Binding, err error) {
-
-	buffer.Reset()
-
-	if err != nil {
-		buffer.WriteString("{ \"match\": false, \"error\": ")
-		buffer.WriteString(fmt.Sprintf("\"%v\" }", err.Error()))
-	} else {
-		buffer.WriteString("{ \"match\": true, \"bindings\": [")
-
-		first := true
-		for _, b := range bindings {
-			if !first {
-				buffer.WriteString(", ")
-			}
-			first = false
-			switch v := b.Value.(type) {
-			case parser.BindingInt:
-				buffer.WriteString("\"")
-				buffer.WriteString(b.Name)
-				buffer.WriteString("\"=\"")
-				buffer.WriteString(strconv.Itoa(int(v)))
-				buffer.WriteString("\"")
-			case parser.BindingBool:
-				buffer.WriteString("\"")
-				buffer.WriteString(b.Name)
-				buffer.WriteString("\"=\"")
-				buffer.WriteString(strconv.FormatBool(bool(v)))
-				buffer.WriteString("\"")
-			case parser.BindingString:
-				buffer.WriteString("\"")
-				buffer.WriteString(b.Name)
-				buffer.WriteString("\"=\"")
-				buffer.WriteString(string(v))
-				buffer.WriteString("\"")
-			}
-
-		}
-		buffer.WriteString("] }")
-	}
-	fmt.Println(buffer.String())
 }
 
 func convIntParser() convert {
@@ -83,16 +43,21 @@ func syslogParser() convert {
 	}
 }
 
+// doTransform is where you read the record that was written, and then you can
+// output new records that will be written to the destination topic
+func doTransform(e transform.WriteEvent, w transform.RecordWriter) error {
+	return w.Write(e.Record())
+}
+
 func main() {
 	args := os.Args
-	fmt.Fprintf(os.Stderr, "Args  %v \n", args)
+	fmt.Fprintf(os.Stderr, "Args(%v) %v \n", len(args), args)
 
 	switch len(args) {
 	case 1:
-		const data = `[ foo =42, bar=true, baz = false]`
-		p := intBool.IntBoolMappingParser()
-		writeBindings(parser.Parse(p.ConfigurationParser, data))
-
+		// Register your transform function.
+		// This is a good place to perform other setup too.
+		transform.OnRecordWritten(doTransform)
 	case 2:
 		switch args[1] {
 		case "syslog":
