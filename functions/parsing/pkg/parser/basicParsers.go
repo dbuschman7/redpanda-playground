@@ -1,6 +1,8 @@
 package parser
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func IsAsciiLetter(r rune) bool {
 	return r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z'
@@ -42,6 +44,14 @@ var IntParser = AndThen(GetString(ConsumeSome(IsDecimalDigit)),
 			return Fail[int]
 		}
 		return Succeed(v)
+	},
+)
+
+var NumberStringParser = AndThen(
+	GetString(ConsumeSome(IsDecimalDigit)),
+	func(s string) Parser[string] {
+		//	fmt.Printf("nsp: %s\n", s)
+		return Succeed(s)
 	},
 )
 

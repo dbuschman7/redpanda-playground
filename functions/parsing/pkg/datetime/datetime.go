@@ -88,6 +88,7 @@ func time8601Support() Parser[string] {
 	s := StartSkipping(WhitespaceSkipParser)
 	s1 := AppendKeeping(s, GetString(ConsumeSome(isNumOrColonOrPeriod)))
 	s2 := Apply(s1, func(time string) string {
+		fmt.Printf("time: '%v'\n", time)
 		return time
 	})
 
@@ -121,7 +122,7 @@ func date8601Support() Parser[string] {
 	s1 := AppendKeeping(s, Map(GetString(ConsumeSome(isNumOrDash)), func(text string) string { return text }))
 
 	s2 := Apply(s1, func(date string) string {
-		fmt.Printf("date: '%v'\n", date)
+		// fmt.Printf("date: '%v'\n", date)
 		return date
 	})
 
@@ -185,7 +186,7 @@ func ISO8601Parser() Parser[string] {
 
 var monthListLower = []string{"jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"}
 
-var monthAsciiParser = AndThen(
+var MonthAsciiParser = AndThen(
 	AsciiParser,
 	func(month string) Parser[string] {
 		if len(month) != 3 {
@@ -201,14 +202,15 @@ var monthAsciiParser = AndThen(
 
 func Syslog3164DateTimeParser() Parser[string] {
 	w := StartSkipping(WhitespaceSkipParser)
-	s1 := AppendKeeping(w, monthAsciiParser)
+	s1 := AppendKeeping(w, MonthAsciiParser)
 	wh1 := AppendSkipping(s1, WhitespaceSkipParser)
-	d1 := AppendKeeping(wh1, GetString(ConsumeSome(IsDecimalDigit)))
+	d1 := AppendKeeping(wh1, NumberStringParser)
 	wh2 := AppendSkipping(d1, WhitespaceSkipParser)
 	s3 := AppendKeeping(wh2, time8601Support())
 
 	return Apply3(s3, func(month string, day string, time string) string {
-		return fmt.Sprintf("%s %s %s", month, day, time)
+		// fmt.Printf("%s|%v|%s", month, day, time)
+		return fmt.Sprintf("%s %v %s", month, day, time)
 	})
 
 }

@@ -7,6 +7,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMonthAsciiParser(t *testing.T) {
+	// Test: "jan"
+	{
+		p, err := parser.Parse(MonthAsciiParser, "jan")
+		assert.Nil(t, err)
+		assert.Equal(t, "jan", p)
+	}
+
+	// Test: "JAN"
+	{
+		p, err := parser.Parse(MonthAsciiParser, "JAN")
+		assert.Nil(t, err)
+		assert.Equal(t, "JAN", p)
+	}
+
+	// Test: "january"
+	{
+		p, err := parser.Parse(MonthAsciiParser, "january")
+		assert.NotEmpty(t, err)
+		assert.Empty(t, p)
+	}
+
+	// Test: "jane"
+	{
+		p, err := parser.Parse(MonthAsciiParser, "jane")
+		assert.NotEmpty(t, err)
+		assert.Empty(t, p)
+	}
+}
+
 func TestTimeZoneParserFor8601Support(t *testing.T) {
 	// Test the timezone parser
 
@@ -181,23 +211,21 @@ func TestSyslog3164DateTimeParser(t *testing.T) {
 	p := Syslog3164DateTimeParser()
 
 	// Test a valid date
-	r, err := parser.Parse(p, "Jan  2 15:04:05")
-	if err != nil {
-		t.Errorf("Syslog3164DateTimeParser failed: %v", err)
-	}
-	if r != "Jan  2 15:04:05" {
-		t.Errorf("Syslog3164DateTimeParser failed: %v", r)
-	}
+	r, err := parser.Parse(p, "Jan 02 15:04:05")
+	assert.Nil(t, err)
+	assert.Equal(t, "Jan 02 15:04:05", r)
+
+	// Test a valid date
+	r, err = parser.Parse(p, "Jan  2 15:04:05")
+	assert.Nil(t, err)
+	assert.Equal(t, "Jan 2 15:04:05", r)
 
 	// Test an invalid date
 	_, err = parser.Parse(p, "Jan  2 15:04:05+01")
-	if err == nil {
-		t.Errorf("Syslog3164DateTimeParser failed: %v", err)
-	}
+	assert.NotNil(t, err)
 
 	// Test an unrecognized date
 	_, err = parser.Parse(p, "Jan  2 15:04:05+01")
-	if err == nil {
-		t.Errorf("Syslog3164DateTimeParser failed: %v", err)
-	}
+	assert.NotNil(t, err)
+
 }
