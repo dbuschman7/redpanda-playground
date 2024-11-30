@@ -10,6 +10,10 @@ type State struct {
 	offset int    // The current parsing offset into the input string.
 }
 
+func WithState(data string) State {
+	return State{data: data, offset: 0}
+}
+
 // remaining returns the a string which is just the unconsumed input
 func (s State) remaining() string {
 	return s.data[s.offset:]
@@ -27,4 +31,8 @@ func (s State) consume(n int) State {
 func (s State) nextRune() (rune, State) {
 	r, w := utf8.DecodeRuneInString(s.remaining())
 	return r, s.consume(w)
+}
+
+func (s State) extractString(next State) string {
+	return s.data[s.offset:next.offset]
 }

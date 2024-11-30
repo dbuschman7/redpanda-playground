@@ -1,7 +1,11 @@
 package parser
 
 import (
+	"fmt"
 	"strconv"
+	"unicode/utf8"
+
+	"slices"
 )
 
 func IsAsciiLetter(r rune) bool {
@@ -66,6 +70,53 @@ var NameParser = GetString(
 			return ConsumeWhile(IsAlphaNum)
 		},
 	))
+
+func makeDelimiterFunction(delimiter rune) func(r rune) bool {
+	return func(r rune) bool {
+		return r != delimiter && r != utf8.RuneError
+	}
+}
+
+func ConsumeWhileNotDelimiterParser(delimiter rune) Parser[Binding] {
+	return AndThen(
+		GetString(ConsumeWhile(makeDelimiterFunction(delimiter))),
+		//
+		func(value string) Parser[Binding] {
+			return Succeed(Binding{Value: BindingString(value)})
+		})
+}
+
+var quotesList = []rune{'"', '\'', '“', '”', '‘', '’', '`'}
+
+func QuotedStringParser() Parser[string] {
+	return func(initial State) (string, State, error) {
+		quote, _ := utf8.DecodeRuneInString(initial.remaining())
+
+		if !slices.Contains(quotesList, quote) {
+			return "", initial, ErrNoMatch
+		}
+
+		start := initial.offset + 1
+		current := start
+		found := false
+		for pos, char := range initial.data[start:] {
+			if char == quote {
+				found = true
+				return initial.data[start:current], initial.consume(pos + 1), nil
+			}
+			if char == '\\' {
+				current = current + 1 // skip an extra character
+			}
+			current = current + 1
+		}
+
+		if !found {
+			return "", initial, fmt.Errorf("no closing quote")
+		}
+		return "", initial, nil
+
+	}
+}
 
 func EitherOrParser(first string, second string) Parser[string] {
 	return OneOf(

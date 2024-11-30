@@ -10,6 +10,7 @@ package parser
 import (
 	"errors"
 	"strings"
+	"unicode/utf8"
 )
 
 // A Parser[T] is a parser that, on parsing success, produces a value of type T.
@@ -31,9 +32,8 @@ var (
 // Parse[T] takes a Parser[T] and an input string, and runs the Parser on the input string.
 // On success, Parser returns a value of type T.   Parse[T] returns ErrNoMatch for a failed parse,
 // and ErrUnconsumedInput if the parser succeeded but didn't consume all of the input string.
-func Parse[T any](parser Parser[T], data string) (T, error) {
-	initial := State{data: data, offset: 0}
-	result, final, err := parser(initial)
+func Parse[T any](parser Parser[T], state State) (T, error) {
+	result, final, err := parser(state)
 	if err != nil {
 		var zero T
 		return zero, err
@@ -41,6 +41,15 @@ func Parse[T any](parser Parser[T], data string) (T, error) {
 	if final.offset < len(final.data) {
 		var zero T
 		return zero, ErrUnconsumedInput
+	}
+	return result, err
+}
+
+func ParseSome[T any](parser Parser[T], state State) (T, error) {
+	result, _, err := parser(state)
+	if err != nil {
+		var zero T
+		return zero, err
 	}
 	return result, err
 }
@@ -112,7 +121,7 @@ func OneOf[T any](parsers ...Parser[T]) Parser[T] {
 func ConsumeIf(condition func(rune) bool) Parser[Empty] {
 	return func(initial State) (Empty, State, error) {
 		r, next := initial.nextRune()
-		if !condition(r) {
+		if !condition(r) || r == utf8.RuneError {
 			return Empty{}, initial, ErrNoMatch
 		}
 		return Empty{}, next, nil
@@ -162,12 +171,11 @@ func Exactly(token string) Parser[Empty] {
 // succeeds; on success it returns the slice of the input string matched by parser.
 func GetString[T any](parser Parser[T]) Parser[string] {
 	return func(initial State) (string, State, error) {
-		start := initial.offset
 		_, next, err := parser(initial)
 		if err != nil {
 			return "", initial, err
 		}
-		end := next.offset
-		return next.data[start:end], next, nil
+		data := initial.extractString(next)
+		return data, next, nil
 	}
 }
