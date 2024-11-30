@@ -33,7 +33,7 @@ func pipedStdin(fn convert) error {
 func convIntParser() convert {
 	p := intBool.IntBoolMappingParser()
 	return func(data string) (parser.Bindings, error) {
-		return parser.Parse(p.ConfigurationParser, data)
+		return parser.Parse(p.ConfigurationParser, parser.WithState(data))
 	}
 }
 

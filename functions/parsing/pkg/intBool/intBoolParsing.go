@@ -1,6 +1,7 @@
 package intBool
 
 import (
+	"dave.internal/pkg/delimited"
 	"dave.internal/pkg/parser"
 )
 
@@ -81,42 +82,7 @@ func IntBoolMappingParser() IntBoolMappingParsers {
 			next    *BindingList
 		}
 
-		p.bindingsParser = parser.Loop(nil,
-			func(bindings *BindingList) parser.Parser[parser.Step[*BindingList, []parser.Binding]] {
-				if bindings == nil {
-					return parser.Map(p.bindingParser,
-						func(binding parser.Binding) parser.Step[*BindingList, []parser.Binding] {
-							return parser.Step[*BindingList, []parser.Binding]{Accum: &BindingList{binding: binding}, Done: false}
-						},
-					)
-				}
-				s := parser.StartSkipping(p.whitespaceParser)
-				s1 := parser.AppendSkipping(s, parser.Exactly(","))
-				s2 := parser.AppendSkipping(s1, p.whitespaceParser)
-				s3 := parser.AppendKeeping(s2, p.bindingParser)
-				extend := parser.Apply(s3, func(b parser.Binding) parser.Step[*BindingList, []parser.Binding] {
-					return parser.Step[*BindingList, []parser.Binding]{
-						Accum: &BindingList{binding: b, next: bindings},
-						Done:  false,
-					}
-				})
-
-				var bindingSlice []parser.Binding
-				b := bindings
-				for {
-					if b == nil {
-						break
-					}
-					bindingSlice = append(bindingSlice, b.binding)
-					b = b.next
-				}
-				return parser.OneOf(
-					extend,
-					parser.Succeed(parser.Step[*BindingList, []parser.Binding]{Value: bindingSlice, Done: true}),
-				)
-
-			},
-		)
+		p.bindingsParser = delimited.DelimitedParser(p.bindingParser, ",")
 	}
 	{
 		s := parser.StartSkipping(parser.Exactly("["))
