@@ -9,7 +9,7 @@ type BindingList struct {
 	next    *BindingList
 }
 
-func DelimitedParser(bindingParser Parser[Binding], separator string) Parser[[]Binding] {
+func DelimitedParser(bindingParser Parser[Binding], separator rune) Parser[[]Binding] {
 	return Loop(nil,
 		func(bindings *BindingList) Parser[Step[*BindingList, []Binding]] {
 			if bindings == nil {
@@ -20,8 +20,14 @@ func DelimitedParser(bindingParser Parser[Binding], separator string) Parser[[]B
 				)
 			}
 			s := StartSkipping(WhitespaceSkipParser)
-			s2 := AppendKeeping(s, bindingParser)
-			extend := Apply(s2, func(b Binding) Step[*BindingList, []Binding] {
+			s1 := AppendSkipping(s, ConsumeIf(func(r rune) bool {
+				return r == rune(separator)
+			}))
+			s2 := AppendSkipping(s1, WhitespaceSkipParser)
+			k1 := AppendKeeping(s2, bindingParser)
+			s3 := AppendSkipping(k1, WhitespaceSkipParser)
+
+			extend := Apply(s3, func(b Binding) Step[*BindingList, []Binding] {
 				return Step[*BindingList, []Binding]{
 					Accum: &BindingList{binding: b, next: bindings},
 					Done:  false,

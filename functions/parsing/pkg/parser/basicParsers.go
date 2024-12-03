@@ -71,21 +71,6 @@ var NameParser = GetString(
 		},
 	))
 
-func makeDelimiterFunction(delimiter rune) func(r rune) bool {
-	return func(r rune) bool {
-		return r != delimiter && r != utf8.RuneError
-	}
-}
-
-func ConsumeWhileNotDelimiterParser(delimiter rune) Parser[Binding] {
-	return AndThen(
-		GetString(ConsumeWhile(makeDelimiterFunction(delimiter))),
-		//
-		func(value string) Parser[Binding] {
-			return Succeed(Binding{Value: BindingString(value)})
-		})
-}
-
 var quotesList = []rune{'"', '\'', '“', '”', '‘', '’', '`'}
 
 func QuotedStringParser() Parser[string] {

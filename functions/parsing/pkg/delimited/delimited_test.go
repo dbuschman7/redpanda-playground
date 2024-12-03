@@ -1,7 +1,6 @@
 package delimited
 
 import (
-	"fmt"
 	"testing"
 
 	. "dave.internal/pkg/parser"
@@ -9,21 +8,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var intBoolValue = OneOf(
+	Map(BoolParser,
+		func(v bool) BindingValue {
+			return BindingBool(v)
+		}),
+	Map(IntParser,
+		func(i int) BindingValue {
+			return BindingInt(i)
+		}),
+)
+
 func TestDelimitedParserNameValueUseCase(t *testing.T) {
 
-	intBoolValue := OneOf(
-		Map(BoolParser,
-			func(v bool) BindingValue {
-				return BindingBool(v)
-			}),
-		Map(IntParser,
-			func(i int) BindingValue {
-				return BindingInt(i)
-			}),
-	)
-
-	s0 := StartSkipping(WhitespaceSkipParser)
-	k1 := AppendKeeping(s0, NameParser)
+	k1 := StartKeeping(NameParser)
 	s1 := AppendSkipping(k1, WhitespaceSkipParser)
 	s2 := AppendSkipping(s1, Exactly("="))
 	s3 := AppendSkipping(s2, WhitespaceSkipParser)
@@ -32,7 +30,7 @@ func TestDelimitedParserNameValueUseCase(t *testing.T) {
 		return Binding{Name: name, Value: value}
 	})
 
-	p := DelimitedParser(bindingParser, ",")
+	p := DelimitedParser(bindingParser, rune(','))
 	r, err := Parse(p, WithState("name1 = true, name2 = 123, name3 = false"))
 	if err != nil {
 		t.Errorf("DelimitedParser failed: %v", err)
@@ -45,45 +43,48 @@ func TestDelimitedParserNameValueUseCase(t *testing.T) {
 	}, r)
 }
 
-func TestNonDelimiterParser(t *testing.T) {
-	p := ConsumeWhileNotDelimiterParser(',', false)
-	r, err := ParseSome(p, WithState("true"))
-	if err != nil {
-		t.Errorf("NotDelimiterParser failed: %v", err)
-	}
+func TestCommaSeparatedValuesParser(t *testing.T) {
 
-	fmt.Printf("r: %v\n", r.Value)
-	assert.Equal(t, BindingString("true"), r.Value)
-}
+	s1 := StartSkipping(WhitespaceSkipParser)
+	k1 := AppendKeeping(s1, intBoolValue)
+	bindingParser := Apply(k1, func(value BindingValue) Binding {
+		return Binding{Value: value}
+	})
 
-func TestNonDelimiterParserUnquote(t *testing.T) {
-	p := ConsumeWhileNotDelimiterParser(',', true)
-	r, err := ParseSome(p, WithState("\"true\", true"))
-	if err != nil {
-		t.Errorf("NotDelimiterParser failed: %v", err)
-	}
-
-	assert.Equal(t, r, Binding{Value: BindingString("true")})
-
-	p = ConsumeWhileNotDelimiterParser(',', false)
-	r, err = ParseSome(p, WithState("\"true\""))
-	if err != nil {
-		t.Errorf("NotDelimiterParser failed: %v", err)
-	}
-	assert.Equal(t, r, Binding{Value: BindingString("\"true\"")})
-}
-
-func TestDelimitedParserCommaDelimited(t *testing.T) {
-
-	p := ConsumeWhileNotDelimiterParser(',', true)
-	r, err := Parse(DelimitedParser(p, ","), WithState("true, \"123\", false"))
+	p := DelimitedParser(bindingParser, rune(','))
+	r, err := Parse(p, WithState("1, 2, true, 4, false"))
 	if err != nil {
 		t.Errorf("DelimitedParser failed: %v", err)
 	}
 
 	assert.Equal(t, []Binding{
-		{Value: BindingString("true")},
-		{Value: BindingString("123")},
-		{Value: BindingString("false")},
+		{Value: BindingBool(false)},
+		{Value: BindingInt(4)},
+		{Value: BindingBool(true)},
+		{Value: BindingInt(2)},
+		{Value: BindingInt(1)},
+	}, r)
+}
+
+func TestPipeSeparatedValuesParser(t *testing.T) {
+
+	s1 := StartSkipping(WhitespaceSkipParser)
+	k1 := AppendKeeping(s1, intBoolValue)
+	bindingParser := Apply(k1, func(value BindingValue) Binding {
+		return Binding{Value: value}
+	})
+
+	p := DelimitedParser(bindingParser, rune('|'))
+	r, err := Parse(p, WithState("1| 2| true| 4| false  "))
+	if err != nil {
+		t.Errorf("DelimitedParser failed: %v", err)
+	}
+
+	assert.Equal(t, []Binding{
+		{Value: BindingBool(false)},
+		{Value: BindingInt(4)},
+		{Value: BindingBool(true)},
+		{Value: BindingInt(2)},
+		{Value: BindingInt(1)},
 	}, r)
 }

@@ -49,10 +49,10 @@ func TestBindingsParser(t *testing.T) {
 	if err != nil {
 		t.Errorf("BindingsParser failed: %v", err)
 	}
-	assert.Equal(t, r, []Binding{
+	assert.Equal(t, []Binding{
 		{Name: "name2", Value: BindingInt(123)},
 		{Name: "name1", Value: BindingBool(true)},
-	})
+	}, r)
 }
 
 func TestConfigurationParser(t *testing.T) {
@@ -61,8 +61,8 @@ func TestConfigurationParser(t *testing.T) {
 	if err != nil {
 		t.Errorf("ConfigurationParser failed: %v", err)
 	}
-	assert.Equal(t, r, []Binding{
+	assert.Equal(t, []Binding{
 		{Name: "name2", Value: BindingInt(123)},
 		{Name: "name1", Value: BindingBool(true)},
-	})
+	}, r)
 }

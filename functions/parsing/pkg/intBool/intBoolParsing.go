@@ -82,7 +82,7 @@ func IntBoolMappingParser() IntBoolMappingParsers {
 			next    *BindingList
 		}
 
-		p.bindingsParser = delimited.DelimitedParser(p.bindingParser, ",")
+		p.bindingsParser = delimited.DelimitedParser(p.bindingParser, ',')
 	}
 	{
 		s := parser.StartSkipping(parser.Exactly("["))

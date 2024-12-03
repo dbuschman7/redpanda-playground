@@ -27,3 +27,5 @@ functions/parsing/dave.internal
 connect/streams/tmp
 functions/parsing/parse
 functions/parsing/syslog_pre_parse
+functions/parsing/syslog_parse
+functions/parsing/syslog_parse.wasm
