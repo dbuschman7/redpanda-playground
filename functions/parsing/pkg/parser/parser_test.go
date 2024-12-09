@@ -7,7 +7,7 @@ import (
 )
 
 func TestFail(t *testing.T) {
-	state := State{data: "hello", offset: 0}
+	state := State{data: "hello", start: 0}
 	result, newState, err := Fail[string](state)
 	assert.Equal(t, "no match", err.Error())
 	assert.Equal(t, state, newState)
@@ -15,7 +15,7 @@ func TestFail(t *testing.T) {
 }
 
 func TestSucceed(t *testing.T) {
-	state := State{data: "hello", offset: 0}
+	state := State{data: "hello", start: 0}
 	result, newState, err := Succeed("result")(state)
 	assert.Nil(t, err)
 	assert.Equal(t, "result", result)
@@ -23,7 +23,7 @@ func TestSucceed(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	state := State{data: "hello", offset: 0}
+	state := State{data: "hello", start: 0}
 	parser := Map(Succeed(42), func(i int) string {
 		return "result"
 	})
@@ -34,7 +34,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestAndThen(t *testing.T) {
-	state := State{data: "hello", offset: 0}
+	state := WithState("hello")
 	parser := AndThen(Succeed(42), func(i int) Parser[string] {
 		return Succeed("result")
 	})
@@ -45,7 +45,7 @@ func TestAndThen(t *testing.T) {
 }
 
 func TestOneOf(t *testing.T) {
-	state := State{data: "hello", offset: 0}
+	state := WithState("hello")
 	parser := OneOf(Succeed(42), Succeed(43))
 	result, newState, err := parser(state)
 	assert.Nil(t, err)
@@ -54,10 +54,10 @@ func TestOneOf(t *testing.T) {
 }
 
 func TestGetString(t *testing.T) {
-	state := State{data: "hello", offset: 0}
+	state := WithState("hello")
 	parser := GetString(Exactly("hello"))
 	result, newState, err := parser(state)
 	assert.Nil(t, err)
 	assert.Equal(t, "hello", result)
-	assert.Equal(t, State{data: "hello", offset: 5}, newState)
+	assert.Equal(t, State{data: "hello", start: 5, end: 5}, newState)
 }

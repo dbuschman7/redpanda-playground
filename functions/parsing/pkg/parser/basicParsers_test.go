@@ -119,48 +119,6 @@ func TestNameParser(t *testing.T) {
 	assert.Equal(t, "a1b2c3", r)
 }
 
-func TestQuotedStringParser(t *testing.T) {
-	state := WithState(`"abc"`)
-	r, next, err := QuotedStringParser()(state)
-	if err != nil {
-		t.Errorf("QuotedStringParser failed: %v", err)
-	}
-	assert.Equal(t, "abc", r)
-	assert.Equal(t, 4, next.offset)
-
-	state = WithState(`'abc'`)
-	r, next, err = QuotedStringParser()(state)
-	if err != nil {
-		t.Errorf("QuotedStringParser failed: %v", err)
-	}
-	assert.Equal(t, "abc", r)
-	assert.Equal(t, 4, next.offset)
-
-	state = WithState(`abc`)
-	r, next, err = QuotedStringParser()(state)
-	if err == nil {
-		t.Errorf("QuotedStringParser failed: %v", err)
-	}
-	assert.Equal(t, 0, next.offset)
-	assert.Equal(t, "", r)
-
-	state = WithState(`"abc`)
-	r, next, err = QuotedStringParser()(state)
-	if err == nil {
-		t.Errorf("QuotedStringParser failed: %v", err)
-	}
-	assert.Equal(t, 0, next.offset)
-	assert.Equal(t, `"abc`, next.remaining())
-	assert.Equal(t, "", r)
-
-	_, next, err = QuotedStringParser()(WithState(`abc"`))
-	if err == nil {
-		t.Errorf("QuotedStringParser failed: %v", err)
-	}
-	assert.Equal(t, 0, next.offset)
-	assert.Equal(t, `abc"`, next.remaining())
-}
-
 func TestConsumeIf(t *testing.T) {
 	state := WithState("abc")
 	r, next, err := ConsumeIf(IsAsciiLetter)(state)
@@ -169,7 +127,7 @@ func TestConsumeIf(t *testing.T) {
 	}
 	assert.IsType(t, Empty{}, r)
 	assert.Equal(t, "bc", next.remaining())
-	assert.Equal(t, 1, next.offset)
+	assert.Equal(t, 1, next.start)
 
 	//
 	state = WithState("123")
@@ -179,5 +137,32 @@ func TestConsumeIf(t *testing.T) {
 	}
 	assert.IsType(t, Empty{}, r)
 	assert.Equal(t, "123", next.remaining())
-	assert.Equal(t, 0, next.offset)
+	assert.Equal(t, 0, next.start)
+}
+
+func TestIpTupleParser(t *testing.T) {
+
+	r, err := Parse[int](IpTupleParser(), WithState("234"))
+	if err != nil {
+		t.Errorf("IpTupleParser failed: %v", err)
+	}
+	assert.Equal(t, 234, r)
+
+	_, err = Parse[int](IpTupleParser(), WithState("400"))
+	if err == nil {
+		t.Errorf("IpTupleParser failed: %v", err)
+	}
+}
+
+func TestIpAddressParser(t *testing.T) {
+	r, err := Parse(IpAddressParser(), WithState("1.12.123.234"))
+	if err != nil {
+		t.Errorf("IpAddressParser failed: %v", err)
+	}
+	assert.Equal(t, "1.12.123.234", r)
+
+	_, err = Parse(IpAddressParser(), WithState("1,2,3,400"))
+	if err == nil {
+		t.Errorf("IpAddressParser failed: %v", err)
+	}
 }

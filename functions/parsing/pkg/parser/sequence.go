@@ -109,3 +109,17 @@ func Apply3[T any, U any, V any, A any](parser Parser[Seq[Seq[Seq[Empty, T], U],
 		return mapper(seq.First.First.Second, seq.First.Second, seq.Second), next, nil
 	}
 }
+
+// Apply4 returns a parser by transforming the output of the argument parser, which produces
+// a four-element sequence.  The resulting parser transforms the four values from the sequence
+// into the final result value using the argument mapper function.
+func Apply4[T any, U any, V any, W any, A any](parser Parser[Seq[Seq[Seq[Seq[Empty, T], U], V], W]], mapper func(T, U, V, W) A) Parser[A] {
+	return func(initial State) (A, State, error) {
+		seq, next, err := parser(initial)
+		if err != nil {
+			var zero A
+			return zero, initial, err
+		}
+		return mapper(seq.First.First.First.Second, seq.First.First.Second, seq.First.Second, seq.Second), next, nil
+	}
+}

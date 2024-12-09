@@ -20,7 +20,7 @@ func TestLoop(t *testing.T) {
 
 	loop := Loop(0, stepper)
 
-	state := State{data: "hello", offset: 0}
+	state := State{data: "hello", start: 0}
 	result, newState, err := loop(state)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

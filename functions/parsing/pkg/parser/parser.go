@@ -38,7 +38,7 @@ func Parse[T any](parser Parser[T], state State) (T, error) {
 		var zero T
 		return zero, err
 	}
-	if final.offset < len(final.data) {
+	if final.start < len(final.data) {
 		var zero T
 		return zero, ErrUnconsumedInput
 	}
@@ -120,7 +120,7 @@ func OneOf[T any](parsers ...Parser[T]) Parser[T] {
 // the input and the parser succeeds.  Otherwise the parser fails.
 func ConsumeIf(condition func(rune) bool) Parser[Empty] {
 	return func(initial State) (Empty, State, error) {
-		r, next := initial.nextRune()
+		r, next := initial.nextHeadRune()
 		if !condition(r) || r == utf8.RuneError {
 			return Empty{}, initial, ErrNoMatch
 		}
@@ -136,7 +136,7 @@ func ConsumeWhile(condition func(r rune) bool) Parser[Empty] {
 	return func(initial State) (Empty, State, error) {
 		current := initial
 		for {
-			r, next := current.nextRune()
+			r, next := current.nextHeadRune()
 			if !condition(r) {
 				return Empty{}, current, nil
 			}

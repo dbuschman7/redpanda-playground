@@ -161,6 +161,19 @@ func TestApply3(t *testing.T) {
 
 }
 
+func TestApply4(t *testing.T) {
+	parser := Apply4(
+		Succeed(Seq[Seq[Seq[Seq[Empty, int], string], float64], string]{
+			Second: "hello",
+		}),
+		func(int, string, float64, string) string { return "hello" },
+	)
+
+	result, _, err := parser(State{})
+	assert.Nil(t, err)
+	assert.Equal(t, "hello", result)
+}
+
 func TestAppendSkipping(t *testing.T) {
 	parser := AppendSkipping(
 		Succeed(Seq[Empty, int]{Second: 42}),

@@ -3,9 +3,6 @@ package parser
 import (
 	"fmt"
 	"strconv"
-	"unicode/utf8"
-
-	"slices"
 )
 
 func IsAsciiLetter(r rune) bool {
@@ -54,7 +51,6 @@ var IntParser = AndThen(GetString(ConsumeSome(IsDecimalDigit)),
 var NumberStringParser = AndThen(
 	GetString(ConsumeSome(IsDecimalDigit)),
 	func(s string) Parser[string] {
-		//	fmt.Printf("nsp: %s\n", s)
 		return Succeed(s)
 	},
 )
@@ -71,41 +67,34 @@ var NameParser = GetString(
 		},
 	))
 
-var quotesList = []rune{'"', '\'', '“', '”', '‘', '’', '`'}
-
-func QuotedStringParser() Parser[string] {
-	return func(initial State) (string, State, error) {
-		quote, _ := utf8.DecodeRuneInString(initial.remaining())
-
-		if !slices.Contains(quotesList, quote) {
-			return "", initial, ErrNoMatch
-		}
-
-		start := initial.offset + 1
-		current := start
-		found := false
-		for pos, char := range initial.data[start:] {
-			if char == quote {
-				found = true
-				return initial.data[start:current], initial.consume(pos + 1), nil
-			}
-			if char == '\\' {
-				current = current + 1 // skip an extra character
-			}
-			current = current + 1
-		}
-
-		if !found {
-			return "", initial, fmt.Errorf("no closing quote")
-		}
-		return "", initial, nil
-
-	}
-}
-
 func EitherOrParser(first string, second string) Parser[string] {
 	return OneOf(
 		Map(Exactly(first), func(Empty) string { return first }),
 		Map(Exactly(second), func(Empty) string { return second }),
 	)
+}
+
+func IpTupleParser() Parser[int] {
+	return AndThen(
+		IntParser,
+		func(first int) Parser[int] {
+			if first < 0 || first > 255 {
+				return Fail[int]
+			}
+			return Succeed(first)
+		})
+}
+
+func IpAddressParser() Parser[string] {
+	t1 := StartKeeping(IpTupleParser())
+	s2 := AppendSkipping(t1, Exactly("."))
+	t2 := AppendKeeping(s2, IpTupleParser())
+	s3 := AppendSkipping(t2, Exactly("."))
+	t3 := AppendKeeping(s3, IpTupleParser())
+	s4 := AppendSkipping(t3, Exactly("."))
+	t4 := AppendKeeping(s4, IpTupleParser())
+
+	return Apply4(t4, func(a, b, c, d int) string {
+		return fmt.Sprintf("%d.%d.%d.%d", a, b, c, d)
+	})
 }

@@ -1,61 +1,168 @@
 package syslog
 
 import (
-	"dave.internal/pkg/parser"
+	"encoding/json"
+	"fmt"
+	"unicode/utf8"
+
+	. "dave.internal/pkg/parser"
 )
 
 // RFC 3164 -
-//   <PRIVAL>TIMESTAMP HOSTNAME TAG: MESSAGE
-//   <13>Oct 22 12:34:56 myhostname myapp[1234]: This is a sample syslog message.
+//
+//	<PRIVAL>TIMESTAMP HOSTNAME TAG: MESSAGE
+//	<13>Oct 22 12:34:56 myhostname myapp[1234]: This is a sample syslog message.
+//
+// RFC 5424 -
+//
+//	<PRIVAL>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID [STRUCTURED-DATA] MESSAGE
+// <165>1 2003-10-11T22:14:15.003Z myhostname myapp 1234 ID47 - [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"] An application event log entry...
 
-type SyslogParsers struct {
-	stringParser   parser.Parser[string]
-	nameParser     parser.Parser[string]
-	valueParser    parser.Parser[parser.BindingValue]
-	priorityParser parser.Parser[int]
-	// bindingParser parser.Parser[parser.Binding]
+type priority struct {
+	Facility int
+	Severity int
 }
 
-// no semantical meaning, just a string
-// func datePart8601() parser.Parser[string] { // Date Parser 8601 - 2021-10-22T12:34:56
-// 	s := parser.StartKeeping(IntLength4Parser)
-// 	s1 := parser.AppendSkipping(s, parser.Exactly("-"))
-// 	s2 := parser.AppendKeeping(s1, IntLength2Parser)
-// 	s3 := parser.AppendSkipping(s2, parser.Exactly("-"))
-// 	s4 := parser.AppendKeeping(s3, IntLength2Parser)
+type message struct {
+	Raw      string
+	Bindings []Binding
+	Columns  []string
+}
 
-// 	return parser.Apply3(s4, func(year int, month int, day int) string {
-// 		return fmt.Sprintf("%04d-%02d-%02d", year, month, day)
-// 	})
-// }
+type tag struct {
+	AppName string
+	Pid     int
+}
 
-func SyslogParser() SyslogParsers {
-	var p SyslogParsers
+type structureData struct {
+	Bindings Bindings
+}
 
-	p.stringParser = parser.StringParser
-	p.nameParser = parser.NameParser
+type SyslogMetadata struct {
+	Format     string
+	Priority   priority
+	Timestamp  string
+	Hostname   string
+	Tag        tag
+	Structured structureData
+	Message    message
+}
 
-	p.valueParser = parser.OneOf(
-		parser.Map(p.stringParser,
-			func(v string) parser.BindingValue {
-				return parser.BindingString(v)
-			}),
-		parser.Map(parser.IntParser,
-			func(i int) parser.BindingValue {
-				return parser.BindingInt(i)
-			}),
-	)
+type SyslogMetadataRaw struct {
+	Format  string
+	Message message
+}
 
-	{ // Priority Parser
-		s := parser.StartSkipping(parser.Exactly("<"))
-		s1 := parser.AppendKeeping(s, parser.IntParser)
-		s2 := parser.AppendSkipping(s1, parser.Exactly(">"))
-
-		p.priorityParser = parser.Apply(s2, func(p int) int {
-			return p
-		})
-
+// ////////////////////////////////////
+// JSON
+func encode(in string) string {
+	byt, err := json.Marshal(in)
+	if err != nil {
+		return ""
 	}
+	return string(byt)
+}
 
-	return p
+func (p priority) CompactJson() string {
+	return fmt.Sprintf("{\"fac\":%d,\"sev\":%d}", p.Facility, p.Severity)
+}
+
+func CompactJsonBindings(b Bindings) string {
+	var buffer string
+	for _, binding := range b {
+		if len(buffer) > 0 {
+			buffer += ","
+		}
+		buffer += CompactJsonBinding(binding)
+	}
+	return fmt.Sprintf("{%s}", buffer)
+}
+
+func CompactJsonBinding(b Binding) string {
+	switch b.Value.(type) {
+	case BindingInt:
+		return fmt.Sprintf("\"%s\":%d", b.Name, b.Value)
+	case BindingBool:
+		return fmt.Sprintf("\"%s\":%t", b.Name, b.Value)
+	case BindingString:
+		return fmt.Sprintf("\"%s\":%s", b.Name, encode(string(b.Value.(BindingString))))
+	case BindingBinding:
+		bindings := b.Value.(BindingBinding)
+
+		var buffer string
+		for _, binding := range bindings {
+			if len(buffer) > 0 {
+				buffer += ","
+			}
+			buffer += CompactJsonBinding(binding)
+		}
+		return fmt.Sprintf("\"%s\":{%s}", b.Name, buffer)
+	}
+	return ""
+}
+
+func CompactJsonColumns(c []string) string {
+	var buffer string
+	for _, col := range c {
+		if len(buffer) > 0 {
+			buffer += ","
+		}
+		buffer += fmt.Sprintf("%s", encode(col))
+	}
+	return fmt.Sprintf("[%s]", buffer)
+}
+
+func (m message) CompactJson() string {
+	return fmt.Sprintf("{\"raw\":%s,\"bnd\":%v,\"col\":%v}", encode(m.Raw), CompactJsonBindings(m.Bindings), CompactJsonColumns(m.Columns))
+}
+
+func (t tag) CompactJson() string {
+	return fmt.Sprintf("{\"app\":%s,\"pid\":%d}", encode(t.AppName), t.Pid)
+}
+
+func (s structureData) CompactJson() string {
+	return fmt.Sprintf("{\"bnd\":%v}", CompactJsonBindings(s.Bindings))
+}
+
+func (s SyslogMetadataRaw) CompactJson() string {
+	return fmt.Sprintf("{\"fmt\":\"%s\",\"msg\":%s}", s.Format, s.Message.CompactJson())
+}
+
+// ////////////////////////////////////
+func priorityParser() Parser[priority] {
+	w1 := StartSkipping(Exactly("<"))
+	k1 := AppendKeeping(w1, IntParser)
+	w2 := AppendSkipping(k1, Exactly(">"))
+	return Apply(w2, func(p int) priority {
+		var val int = p / 10
+		return priority{Facility: val, Severity: p % 10}
+	})
+}
+
+// ////////////////////////////////////
+func tag3164Parser() Parser[tag] {
+	w1 := StartKeeping(NameParser)
+	k1 := AppendSkipping(w1, Exactly("["))
+	w2 := AppendKeeping(k1, IntParser)
+	k2 := AppendSkipping(w2, Exactly("]"))
+
+	return Apply2(k2, func(appName string, pid int) tag {
+		return tag{AppName: appName, Pid: pid}
+	})
+}
+
+// ////////////////////////////////////
+
+func SyslogParserRaw() Parser[SyslogMetadataRaw] {
+
+	p := GetString(ConsumeWhile(func(r rune) bool {
+		return r != utf8.RuneError
+	}))
+
+	return Map(p, func(s string) SyslogMetadataRaw {
+		return SyslogMetadataRaw{
+			Format:  "raw",
+			Message: message{Raw: s},
+		}
+	})
 }
