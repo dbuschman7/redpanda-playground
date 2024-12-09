@@ -3,6 +3,7 @@ package datetime
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,9 +45,11 @@ var supportedTimeZonePatterns = []int{
 	4,  // -0100
 }
 
-type DateWithYear struct {
+type DateWithGeneratedYear struct {
 	year int
 	date string
+	time string
+	orig string
 }
 
 func timeZone8601Support() Parser[string] {
@@ -211,7 +214,30 @@ func initMonthYearList() []int {
 	return list
 }
 
-func MonthMapping(monthStr string) int {
+func MonthNumber(monthStr string) int {
+	index := -1 // default value
+	for i, month := range monthListLower {
+		if month == strings.ToLower(monthStr) {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		return 0
+	}
+
+	return index + 1
+}
+func convertNumberStringToInteger(numberStr string) int {
+	for numberStr[0] == '0' {
+		numberStr = numberStr[1:]
+	}
+	number, _ := strconv.Atoi(numberStr)
+	return number
+}
+
+func MonthToYearMapping(monthStr string) int {
 
 	index := -1 // default value
 	for i, month := range monthListLower {
@@ -242,7 +268,7 @@ var MonthAsciiParser = AndThen(
 	},
 )
 
-func Syslog3164DateTimeParser() Parser[DateWithYear] {
+func Syslog3164DateTimeParser() Parser[DateWithGeneratedYear] {
 	w := StartSkipping(WhitespaceSkipParser)
 	s1 := AppendKeeping(w, MonthAsciiParser)
 	wh1 := AppendSkipping(s1, WhitespaceSkipParser)
@@ -250,10 +276,12 @@ func Syslog3164DateTimeParser() Parser[DateWithYear] {
 	wh2 := AppendSkipping(d1, WhitespaceSkipParser)
 	s3 := AppendKeeping(wh2, time8601Support())
 
-	return Apply3(s3, func(month string, day string, time string) DateWithYear {
-		year := MonthMapping(month)
+	return Apply3(s3, func(month string, day string, time string) DateWithGeneratedYear {
+		year := MonthToYearMapping(month)
+		monthInt := MonthNumber(month)
+		date := fmt.Sprintf("%d%02d%02d", year, monthInt, convertNumberStringToInteger(day))
 		// fmt.Printf("year: %v, month: %v  %v\n", year, month, time)
-		return DateWithYear{year, fmt.Sprintf("%s %v %s", month, day, time)}
+		return DateWithGeneratedYear{year, date, time, fmt.Sprintf("%s %v %s", month, day, time)}
 	})
 
 }

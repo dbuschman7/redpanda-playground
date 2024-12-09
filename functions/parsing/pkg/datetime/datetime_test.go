@@ -214,13 +214,19 @@ func TestSyslog3164DateTimeParser(t *testing.T) {
 	// Test a valid date
 	r, err := Parse(p, WithState("Jan 02 15:04:05"))
 	assert.Nil(t, err)
-	assert.Equal(t, "Jan 02 15:04:05", r.date)
+	assert.Equal(t, "Jan 02 15:04:05", r.orig)
+	assert.Equal(t, 8, len(r.date))
+	assert.Equal(t, "0102", r.date[4:])
+	assert.Equal(t, "15:04:05", r.time)
 	assert.GreaterOrEqual(t, r.year, time.Now().Year())
 
 	// Test a valid date
-	r, err = Parse(p, WithState("Jan  2 15:04:05"))
+	r, err = Parse(p, WithState("Oct 22 15:04:05"))
 	assert.Nil(t, err)
-	assert.Equal(t, "Jan 2 15:04:05", r.date)
+	assert.Equal(t, "Oct 22 15:04:05", r.orig)
+	assert.Equal(t, 8, len(r.date))
+	assert.Equal(t, "1022", r.date[4:])
+	assert.Equal(t, "15:04:05", r.time)
 	assert.GreaterOrEqual(t, r.year, time.Now().Year())
 
 	// Test an invalid date
@@ -236,7 +242,7 @@ func TestSyslog3164DateTimeParser(t *testing.T) {
 func TestMonthMapping(t *testing.T) {
 
 	for _, str := range monthListLower {
-		year := MonthMapping(str)
+		year := MonthToYearMapping(str)
 		assert.GreaterOrEqual(t, year, time.Now().Year())
 	}
 
