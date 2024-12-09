@@ -26,6 +26,5 @@ go.work.sum
 functions/parsing/dave.internal
 connect/streams/tmp
 functions/parsing/parse
-functions/parsing/syslog_pre_parse
-functions/parsing/syslog_parse
-functions/parsing/syslog_parse.wasm
+functions/parsing/multi-parse
+functions/parsing/multi-parse.wasm
