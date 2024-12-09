@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	. "dave.internal/pkg/parser"
 )
@@ -43,7 +44,12 @@ var supportedTimeZonePatterns = []int{
 	4,  // -0100
 }
 
-func timeZone8061Support() Parser[string] {
+type DateWithYear struct {
+	year int
+	date string
+}
+
+func timeZone8601Support() Parser[string] {
 	s := StartSkipping(WhitespaceSkipParser)
 
 	s1 := AppendKeeping(s, OneOf[string](
@@ -88,7 +94,7 @@ func time8601Support() Parser[string] {
 	s := StartSkipping(WhitespaceSkipParser)
 	s1 := AppendKeeping(s, GetString(ConsumeSome(isNumOrColonOrPeriod)))
 	s2 := Apply(s1, func(time string) string {
-		fmt.Printf("time: '%v'\n", time)
+		//	fmt.Printf("time: '%v'\n", time)
 		return time
 	})
 
@@ -151,9 +157,9 @@ func ISO8601Parser() Parser[string] {
 	s1 := AppendKeeping(s, date8601Support())
 	s2 := AppendSkipping(s1, OneOf(Exactly("T"), Exactly(" ")))
 	s3 := AppendKeeping(s2, time8601Support())
-	s4 := AppendKeeping(s3, timeZone8061Support())
+	s4 := AppendKeeping(s3, timeZone8601Support())
 	s5 := Apply3(s4, func(date string, time string, zone string) string {
-		fmt.Printf("%s|%s|%s", date, time, zone)
+		// fmt.Printf("%s|%s|%s", date, time, zone)
 
 		patDt := generatePattern(date)
 		patTm := generatePattern(time)
@@ -185,6 +191,42 @@ func ISO8601Parser() Parser[string] {
 }
 
 var monthListLower = []string{"jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"}
+var monthYearList = initMonthYearList()
+
+func initMonthYearList() []int {
+	var list = []int{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+
+	now := time.Now()
+	year := now.Year()
+	nextYear := year + 1
+	var month int = int(now.Month()) - 1
+
+	for i := 0; i < 12; i++ {
+		list[i] = nextYear
+	}
+	for i := month; i < 12; i++ {
+		list[i] = year
+	}
+
+	return list
+}
+
+func MonthMapping(monthStr string) int {
+
+	index := -1 // default value
+	for i, month := range monthListLower {
+		if month == strings.ToLower(monthStr) {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		return 0
+	}
+
+	return monthYearList[index]
+}
 
 var MonthAsciiParser = AndThen(
 	AsciiParser,
@@ -200,7 +242,7 @@ var MonthAsciiParser = AndThen(
 	},
 )
 
-func Syslog3164DateTimeParser() Parser[string] {
+func Syslog3164DateTimeParser() Parser[DateWithYear] {
 	w := StartSkipping(WhitespaceSkipParser)
 	s1 := AppendKeeping(w, MonthAsciiParser)
 	wh1 := AppendSkipping(s1, WhitespaceSkipParser)
@@ -208,9 +250,10 @@ func Syslog3164DateTimeParser() Parser[string] {
 	wh2 := AppendSkipping(d1, WhitespaceSkipParser)
 	s3 := AppendKeeping(wh2, time8601Support())
 
-	return Apply3(s3, func(month string, day string, time string) string {
-		// fmt.Printf("%s|%v|%s", month, day, time)
-		return fmt.Sprintf("%s %v %s", month, day, time)
+	return Apply3(s3, func(month string, day string, time string) DateWithYear {
+		year := MonthMapping(month)
+		// fmt.Printf("year: %v, month: %v  %v\n", year, month, time)
+		return DateWithYear{year, fmt.Sprintf("%s %v %s", month, day, time)}
 	})
 
 }

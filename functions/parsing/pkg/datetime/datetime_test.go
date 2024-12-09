@@ -2,6 +2,7 @@ package datetime
 
 import (
 	"testing"
+	"time"
 
 	. "dave.internal/pkg/parser"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,7 @@ func TestMonthAsciiParser(t *testing.T) {
 func TestTimeZoneParserFor8601Support(t *testing.T) {
 	// Test the timezone parser
 
-	p := timeZone8061Support()
+	p := timeZone8601Support()
 
 	// Test a valid timezone
 	r, err := Parse(p, WithState("+01"))
@@ -213,12 +214,14 @@ func TestSyslog3164DateTimeParser(t *testing.T) {
 	// Test a valid date
 	r, err := Parse(p, WithState("Jan 02 15:04:05"))
 	assert.Nil(t, err)
-	assert.Equal(t, "Jan 02 15:04:05", r)
+	assert.Equal(t, "Jan 02 15:04:05", r.date)
+	assert.GreaterOrEqual(t, r.year, time.Now().Year())
 
 	// Test a valid date
 	r, err = Parse(p, WithState("Jan  2 15:04:05"))
 	assert.Nil(t, err)
-	assert.Equal(t, "Jan 2 15:04:05", r)
+	assert.Equal(t, "Jan 2 15:04:05", r.date)
+	assert.GreaterOrEqual(t, r.year, time.Now().Year())
 
 	// Test an invalid date
 	_, err = Parse(p, WithState("Jan  2 15:04:05+01"))
@@ -227,5 +230,14 @@ func TestSyslog3164DateTimeParser(t *testing.T) {
 	// Test an unrecognized date
 	_, err = Parse(p, WithState("Jan  2 15:04:05+01"))
 	assert.NotNil(t, err)
+
+}
+
+func TestMonthMapping(t *testing.T) {
+
+	for _, str := range monthListLower {
+		year := MonthMapping(str)
+		assert.GreaterOrEqual(t, year, time.Now().Year())
+	}
 
 }
