@@ -1,10 +1,9 @@
-package datetime
+package parser
 
 import (
 	"testing"
 	"time"
 
-	. "dave.internal/pkg/parser"
 	"github.com/stretchr/testify/assert"
 )
 

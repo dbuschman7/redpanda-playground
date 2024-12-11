@@ -266,17 +266,13 @@ func TestApply3Fail(t *testing.T) {
 }
 
 func TestSequenceFail(t *testing.T) {
-	var seq Seq[string, int]
-
-	seq = Seq[string, int]{First: "42", Second: 42}
+	var seq = Seq[string, int]{First: "42", Second: 42}
 	assert.Equal(t, "42", seq.First)
 	assert.Equal(t, 42, seq.Second)
 }
 
 func TestSequenceSequenceFail(t *testing.T) {
-	var seq Seq[Seq[string, int], bool]
-
-	seq = Seq[Seq[string, int], bool]{
+	var seq = Seq[Seq[string, int], bool]{
 		First:  Seq[string, int]{Second: 42},
 		Second: true,
 	}

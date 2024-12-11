@@ -1,4 +1,4 @@
-package datetime
+package parser
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	. "dave.internal/pkg/parser"
 )
 
 func isNumOrDash(r rune) bool {
