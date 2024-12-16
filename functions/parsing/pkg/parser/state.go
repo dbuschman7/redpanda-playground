@@ -79,3 +79,68 @@ func (s State) extractString(next State) string {
 func (s State) extractTailString(next State) string {
 	return s.data[next.end:s.end]
 }
+
+type StateList []State
+
+// snipe returns a list of states in which the next rune is equal to the
+// given rune.
+func (s State) Snipe(char rune) StateList {
+	var states []State
+	for i := s.start; i < s.end; i++ {
+		//fmt.Printf("i: %d current: %v  looking for %v \n", i, s.data[i], char)
+		if s.data[i] == byte(char) {
+			states = append(states, State{data: s.data, start: i, end: s.end})
+		}
+	}
+	return states
+}
+
+// tokenize returns a list of states which begin to the
+// predicate function.
+func (s State) Tokenize(predicate func(rune) bool) StateList {
+	var indexes []int
+
+	indexes = append(indexes, s.start)
+
+	for i := s.start; i < s.end; {
+		test := predicate(rune(s.data[i]))
+		//	fmt.Printf("i: %d current: %v test %v \n", i, s.data[i], test)
+		if test && i > s.start {
+			indexes = append(indexes, i)
+		}
+		i += 1
+	}
+	indexes = append(indexes, s.end)
+
+	var states []State
+	for i := range len(indexes) - 1 {
+		state := State{data: s.data, start: indexes[i], end: indexes[i+1]}
+		//fmt.Printf("state %v: '%v' \n", i, state.remaining())
+		states = append(states, state)
+	}
+	return states
+}
+
+func (s State) ContainsRune(r rune) bool {
+	for i := s.start; i < s.end; i++ {
+		if rune(s.data[i]) == r {
+			return true
+		}
+	}
+	return false
+}
+
+func (s State) ContainsAnyRunes(runes []rune) bool {
+	for i := s.start; i < s.end; i++ {
+		for _, r := range runes {
+			if rune(s.data[i]) == r {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (s State) Extend(in State) State {
+	return State{data: s.data, start: s.start, end: in.end}
+}

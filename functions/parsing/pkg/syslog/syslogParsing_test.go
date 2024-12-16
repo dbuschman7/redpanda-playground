@@ -9,23 +9,23 @@ import (
 )
 
 func TestPriorityParser(t *testing.T) {
-	p, err := Parse(priorityParser(), WithState("<13>"))
+	p, err := Parse(PriorityParser(), WithState("<13>"))
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
-	assert.Equal(t, priority{Facility: 1, Severity: 3}, p)
+	assert.Equal(t, Priority{Facility: 1, Severity: 3}, p)
 	assert.Equal(t, "{\"fac\":1,\"sev\":3}", p.CompactJson())
 	fmt.Println(p.CompactJson())
 
-	p, err = Parse(priorityParser(), WithState("<165>"))
+	p, err = Parse(PriorityParser(), WithState("<165>"))
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
-	assert.Equal(t, priority{Facility: 16, Severity: 5}, p)
+	assert.Equal(t, Priority{Facility: 16, Severity: 5}, p)
 	assert.Equal(t, "{\"fac\":16,\"sev\":5}", p.CompactJson())
 	fmt.Println(p.CompactJson())
 }
 
 func TestTag3164Parser(t *testing.T) {
-	p, err := Parse(tag3164Parser(), WithState("myapp[1234]"))
+	p, err := Parse(Tag3164Parser(), WithState("myapp[1234]"))
 	assert.NotNil(t, p)
 	assert.Nil(t, err)
 	assert.Equal(t, tag{AppName: "myapp", Pid: 1234}, p)

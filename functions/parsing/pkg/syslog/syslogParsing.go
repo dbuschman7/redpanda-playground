@@ -18,7 +18,7 @@ import (
 //	<PRIVAL>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID [STRUCTURED-DATA] MESSAGE
 // <165>1 2003-10-11T22:14:15.003Z myhostname myapp 1234 ID47 - [exampleSDID@32473 iut="3" eventSource="Application" eventID="1011"] An application event log entry...
 
-type priority struct {
+type Priority struct {
 	Facility int
 	Severity int
 }
@@ -40,7 +40,7 @@ type structureData struct {
 
 type SyslogMetadata struct {
 	Format     string
-	Priority   priority
+	Priority   Priority
 	Timestamp  string
 	Hostname   string
 	Tag        tag
@@ -63,7 +63,7 @@ func encode(in string) string {
 	return string(byt)
 }
 
-func (p priority) CompactJson() string {
+func (p Priority) CompactJson() string {
 	return fmt.Sprintf("{\"fac\":%d,\"sev\":%d}", p.Facility, p.Severity)
 }
 
@@ -107,7 +107,7 @@ func CompactJsonColumns(c []string) string {
 		if len(buffer) > 0 {
 			buffer += ","
 		}
-		buffer += fmt.Sprintf("%s", encode(col))
+		buffer += encode(col)
 	}
 	return fmt.Sprintf("[%s]", buffer)
 }
@@ -129,18 +129,18 @@ func (s SyslogMetadataRaw) CompactJson() string {
 }
 
 // ////////////////////////////////////
-func priorityParser() Parser[priority] {
+func PriorityParser() Parser[Priority] {
 	w1 := StartSkipping(Exactly("<"))
 	k1 := AppendKeeping(w1, IntParser)
 	w2 := AppendSkipping(k1, Exactly(">"))
-	return Apply(w2, func(p int) priority {
+	return Apply(w2, func(p int) Priority {
 		var val int = p / 10
-		return priority{Facility: val, Severity: p % 10}
+		return Priority{Facility: val, Severity: p % 10}
 	})
 }
 
 // ////////////////////////////////////
-func tag3164Parser() Parser[tag] {
+func Tag3164Parser() Parser[tag] {
 	w1 := StartKeeping(NameParser)
 	k1 := AppendSkipping(w1, Exactly("["))
 	w2 := AppendKeeping(k1, IntParser)
