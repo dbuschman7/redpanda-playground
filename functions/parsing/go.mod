@@ -1,6 +1,6 @@
 module dave.internal
 
-go 1.23.2
+go 1.22.4
 
 require (
 	github.com/redpanda-data/redpanda/src/transform-sdk/go/transform v1.1.0

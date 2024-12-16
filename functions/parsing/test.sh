@@ -30,8 +30,8 @@ echo "**************************************************************************
 cat /tmp/test.txt | ./$APP_NAME intBool    | tee /tmp/test.out
 echo "*****************************************************************************************"
 cat /tmp/test2.txt | ./$APP_NAME syslogRaw | tee /tmp/test2.out
+echo "File length - " $( cat /tmp/test2.txt | wc -l ) 
 echo "*****************************************************************************************"
 cat /tmp/test3.txt | ./$APP_NAME multiline | tee /tmp/test3.out
-
-echo "File length - " $( cat /tmp/test2.txt | wc -l ) 
+echo "File length - " $( cat /tmp/test3.txt | wc -l ) 
 echo "*****************************************************************************************"
