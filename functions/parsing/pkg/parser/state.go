@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"unicode/utf8"
 )
 
@@ -18,6 +19,10 @@ func WithState(data string) State {
 // remaining returns the a string which is just the unconsumed input
 func (s State) remaining() string {
 	return s.data[s.start:s.end]
+}
+
+func (s State) length() int {
+	return s.end - s.start
 }
 
 // consume returns a new state in which the offset pointer is advanced
@@ -97,28 +102,46 @@ func (s State) Snipe(char rune) StateList {
 
 // tokenize returns a list of states which begin to the
 // predicate function.
-func (s State) Tokenize(predicate func(rune) bool) StateList {
+func (s State) Tokenize(keepDelim bool, predicate func(rune) bool) StateList {
 	var indexes []int
 
 	indexes = append(indexes, s.start)
 
+	lastSeen := s.start
 	for i := s.start; i < s.end; {
 		test := predicate(rune(s.data[i]))
-		//	fmt.Printf("i: %d current: %v test %v \n", i, s.data[i], test)
+		fmt.Printf("i:%d   current:%v   test:%v    lastSeen:%v \n", i, s.data[i], test, lastSeen)
 		if test && i > s.start {
 			indexes = append(indexes, i)
 		}
 		i += 1
+		lastSeen = i
 	}
 	indexes = append(indexes, s.end)
+	fmt.Printf("indexes: %v \n", indexes)
 
 	var states []State
 	for i := range len(indexes) - 1 {
 		state := State{data: s.data, start: indexes[i], end: indexes[i+1]}
-		//fmt.Printf("state %v: '%v' \n", i, state.remaining())
-		states = append(states, state)
+		if !keepDelim {
+			state = state.trimLeadingPredicate(predicate)
+		}
+		fmt.Printf("state %v: '%v' \n", i, state.remaining())
+		if state.length() > 0 {
+			states = append(states, state)
+		}
+
 	}
 	return states
+}
+
+func (s State) trimLeadingPredicate(predicate func(rune) bool) State {
+	for i := s.start; i < s.end; i++ {
+		if !predicate(rune(s.data[i])) {
+			return State{data: s.data, start: i, end: s.end}
+		}
+	}
+	return State{data: s.data, start: s.end, end: s.end}
 }
 
 func (s State) ContainsRune(r rune) bool {

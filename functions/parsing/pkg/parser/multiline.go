@@ -5,7 +5,7 @@ func MultilineParser(snipe rune, predicate Parser[bool]) Parser[[]string] {
 	p := Parser[[]string](func(state State) ([]string, State, error) {
 		begins := []State{}
 
-		for _, snipe := range state.Tokenize(func(r rune) bool { return r == snipe }) {
+		for _, snipe := range state.Tokenize(true, func(r rune) bool { return r == snipe }) {
 
 			//fmt.Printf("Found %v - %v \n", snipe.start, snipe.remaining())
 

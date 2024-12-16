@@ -155,7 +155,7 @@ func TestSnipeEmpty(t *testing.T) {
 func TestTokenizeMultiple(t *testing.T) {
 	state := WithState("ban ana")
 	assert.Equal(t, "ban ana", state.remaining())
-	tokens := state.Tokenize(func(r rune) bool {
+	tokens := state.Tokenize(true, func(r rune) bool {
 		return IsWhitespace(r)
 	})
 
@@ -174,7 +174,7 @@ func TestTokenizeMultiple(t *testing.T) {
 func TestTokenizeMultipleSpaces(t *testing.T) {
 	state := WithState("ban   ana")
 	assert.Equal(t, "ban   ana", state.remaining())
-	tokens := state.Tokenize(func(r rune) bool {
+	tokens := state.Tokenize(true, func(r rune) bool {
 		return IsWhitespace(r)
 	})
 
@@ -201,57 +201,37 @@ func TestTokenizeMultipleSpaces(t *testing.T) {
 func TestTokenizeMultipleSpacesEnd(t *testing.T) {
 	state := WithState("ban   ")
 	assert.Equal(t, "ban   ", state.remaining())
-	tokens := state.Tokenize(func(r rune) bool {
+	tokens := state.Tokenize(false, func(r rune) bool {
 		return IsWhitespace(r)
 	})
 
-	assert.Equal(t, 4, len(tokens))
+	assert.Equal(t, 1, len(tokens))
 	assert.Equal(t, "ban", tokens[0].remaining())
-	assert.Equal(t, " ", tokens[1].remaining())
-	assert.Equal(t, " ", tokens[2].remaining())
-	assert.Equal(t, " ", tokens[3].remaining())
 
 	assert.Equal(t, 0, tokens[0].start)
 	assert.Equal(t, 3, tokens[0].end)
-
-	assert.Equal(t, 3, tokens[1].start)
-	assert.Equal(t, 4, tokens[1].end)
-
-	assert.Equal(t, 4, tokens[2].start)
-	assert.Equal(t, 5, tokens[2].end)
-
-	assert.Equal(t, 5, tokens[3].start)
-	assert.Equal(t, 6, tokens[3].end)
 
 }
 
 func TestTokenizeMultipleSpacesStart(t *testing.T) {
 	state := WithState("   ban")
 	assert.Equal(t, "   ban", state.remaining())
-	tokens := state.Tokenize(func(r rune) bool {
+	tokens := state.Tokenize(false, func(r rune) bool {
 		return IsWhitespace(r)
 	})
 
-	assert.Equal(t, 3, len(tokens))
-	assert.Equal(t, " ", tokens[0].remaining())
-	assert.Equal(t, " ", tokens[1].remaining())
-	assert.Equal(t, " ban", tokens[2].remaining())
+	assert.Equal(t, 1, len(tokens))
+	assert.Equal(t, "ban", tokens[0].remaining())
 
-	assert.Equal(t, 0, tokens[0].start)
-	assert.Equal(t, 1, tokens[0].end)
-
-	assert.Equal(t, 1, tokens[1].start)
-	assert.Equal(t, 2, tokens[1].end)
-
-	assert.Equal(t, 2, tokens[2].start)
-	assert.Equal(t, 6, tokens[2].end)
+	assert.Equal(t, 3, tokens[0].start)
+	assert.Equal(t, 6, tokens[0].end)
 
 }
 
 func TestTokenizeMultipleSpacesStartEnd(t *testing.T) {
 	state := WithState("   ")
 	assert.Equal(t, "   ", state.remaining())
-	tokens := state.Tokenize(func(r rune) bool {
+	tokens := state.Tokenize(true, func(r rune) bool {
 		return IsWhitespace(r)
 	})
 
@@ -269,12 +249,19 @@ func TestTokenizeMultipleSpacesStartEnd(t *testing.T) {
 
 	assert.Equal(t, 2, tokens[2].start)
 	assert.Equal(t, 3, tokens[2].end)
+
+	tokens = state.Tokenize(false, func(r rune) bool {
+		return IsWhitespace(r)
+	})
+
+	assert.Equal(t, 0, len(tokens))
+
 }
 
 func TestTokenizeRune(t *testing.T) {
 	state := WithState("banana")
 	assert.Equal(t, "banana", state.remaining())
-	tokens := state.Tokenize(func(r rune) bool {
+	tokens := state.Tokenize(true, func(r rune) bool {
 		return r == 'n'
 	})
 
