@@ -94,3 +94,33 @@ func TestWriteBindings(t *testing.T) {
 		"{ \"parsed\": true, \"bindings\": { \"foo\": 42, \"bar\": true, \"baz\": { \"qux\": 42, \"quux\": true } }, \"raw\": \"some raw message here\" }",
 		buffer.String())
 }
+
+func TestBindingParser(t *testing.T) {
+	p, err := Parse(BindingParser(), WithState("foo=42"))
+	assert.Nil(t, err)
+	assert.NotNil(t, p)
+
+	assert.Equal(t, "foo", p.Name)
+	assert.Equal(t, BindingInt(42), p.Value)
+
+	p, err = Parse(BindingParser(), WithState("bar=true"))
+	assert.Nil(t, err)
+	assert.NotNil(t, p)
+
+	assert.Equal(t, "bar", p.Name)
+	assert.Equal(t, BindingBool(true), p.Value)
+
+	p, err = Parse(BindingParser(), WithState("baz=\"qux\""))
+	assert.Nil(t, err)
+	assert.NotNil(t, p)
+
+	assert.Equal(t, "baz", p.Name)
+	assert.Equal(t, BindingString("qux"), p.Value)
+
+	p, err = Parse(BindingParser(), WithState("quux=quuz"))
+	assert.Nil(t, err)
+	assert.NotNil(t, p)
+
+	assert.Equal(t, "quux", p.Name)
+	assert.Equal(t, BindingString("quuz"), p.Value)
+}

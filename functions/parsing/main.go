@@ -9,12 +9,11 @@ import (
 
 	"dave.internal/pkg/intBool"
 	"dave.internal/pkg/parser"
-	"dave.internal/pkg/syslog"
 
 	"github.com/redpanda-data/redpanda/src/transform-sdk/go/transform"
 )
 
-type convert func(string) (parser.Bindings, error)
+type convert func(string) (parser.BindingList, error)
 type process func(string) ([]string, error)
 
 var buffer bytes.Buffer
@@ -47,13 +46,13 @@ func pipedStdin(fn process) error {
 
 func convIntParser() convert {
 	p := intBool.IntBoolMappingParser()
-	return func(data string) (parser.Bindings, error) {
+	return func(data string) (parser.BindingList, error) {
 		return parser.Parse(p.ConfigurationParser, parser.WithState(data))
 	}
 }
 
 func syslogParserRaw() process {
-	p := syslog.SyslogParserRaw()
+	p := parser.SyslogParserRaw()
 
 	return func(data string) ([]string, error) {
 		b, err := parser.Parse(p, parser.WithState(data))

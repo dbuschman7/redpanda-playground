@@ -1,7 +1,6 @@
 package intBool
 
 import (
-	"dave.internal/pkg/delimited"
 	"dave.internal/pkg/parser"
 )
 
@@ -39,8 +38,8 @@ type IntBoolMappingParsers struct {
 	nameParser          parser.Parser[string]
 	bindingParser       parser.Parser[parser.Binding]
 	whitespaceParser    parser.Parser[parser.Empty]
-	bindingsParser      parser.Parser[[]parser.Binding]
-	ConfigurationParser parser.Parser[[]parser.Binding]
+	bindingsParser      parser.Parser[parser.BindingList]
+	ConfigurationParser parser.Parser[parser.BindingList]
 }
 
 func IntBoolMappingParser() IntBoolMappingParsers {
@@ -62,7 +61,7 @@ func IntBoolMappingParser() IntBoolMappingParsers {
 			}),
 	)
 
-	p.nameParser = parser.NameParser
+	p.nameParser = parser.EntityNameParser
 	p.whitespaceParser = parser.WhitespaceSkipParser
 
 	{
@@ -77,12 +76,7 @@ func IntBoolMappingParser() IntBoolMappingParsers {
 			})
 	}
 	{
-		type BindingList struct {
-			binding parser.Binding
-			next    *BindingList
-		}
-
-		p.bindingsParser = delimited.DelimitedParser(p.bindingParser, ',')
+		p.bindingsParser = parser.DelimitedParser(p.bindingParser, ',')
 	}
 	{
 		s := parser.StartSkipping(parser.Exactly("["))
@@ -90,7 +84,7 @@ func IntBoolMappingParser() IntBoolMappingParsers {
 		s2 := parser.AppendKeeping(s1, p.bindingsParser)
 		s3 := parser.AppendSkipping(s2, p.whitespaceParser)
 		s4 := parser.AppendSkipping(s3, parser.Exactly("]"))
-		p.ConfigurationParser = parser.Apply(s4, func(b []parser.Binding) []parser.Binding { return b })
+		p.ConfigurationParser = parser.Apply(s4, func(b parser.BindingList) parser.BindingList { return b })
 	}
 	return p
 }

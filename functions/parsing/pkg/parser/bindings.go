@@ -8,7 +8,12 @@ import (
 )
 
 // The result of parsing is a slice of Bindings
-type Bindings []Binding
+type BindingList []Binding
+
+type BindingTree struct {
+	binding Binding
+	next    *BindingTree
+}
 
 // A Binding corresponds to “name = value”
 type Binding struct {
@@ -104,4 +109,43 @@ func WriteBindingsAsJson(buffer *bytes.Buffer, raw string, bindings []Binding, e
 	}
 	buffer.WriteString(" }")
 
+}
+
+var bindingNameParser = OneOf(StringParser, QuotedStringParser())
+
+// non-recursively defined parser for a BindingValue
+var bindingValueParserValue = OneOf(
+	Map(BoolParser,
+		func(v bool) BindingValue {
+			return BindingBool(v)
+		}),
+	Map(IntParser,
+		func(i int) BindingValue {
+			return BindingInt(i)
+		}),
+	Map(QuotedStringParser(),
+		func(s string) BindingValue {
+			return BindingString(s)
+		}),
+	Map(StringParser,
+		func(s string) BindingValue {
+			return BindingString(s)
+		}),
+)
+
+func BindingParser() Parser[Binding] {
+	s := StartKeeping(bindingNameParser)
+	s1 := AppendSkipping(s, WhitespaceSkipParser)
+	s2 := AppendSkipping(s1, Exactly("="))
+	s3 := AppendSkipping(s2, WhitespaceSkipParser)
+	s4 := AppendKeeping(s3, bindingValueParserValue)
+
+	return Apply2(s4,
+		func(name string, value BindingValue) Binding {
+			return Binding{Name: name, Value: value}
+		})
+}
+
+func BindingsParser(delimiter rune) Parser[BindingList] {
+	return DelimitedParser(BindingParser(), delimiter)
 }

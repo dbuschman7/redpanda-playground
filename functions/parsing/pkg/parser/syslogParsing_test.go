@@ -1,10 +1,9 @@
-package syslog
+package parser
 
 import (
 	"fmt"
 	"testing"
 
-	. "dave.internal/pkg/parser"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,7 +55,7 @@ func TestCompactJsonBinding(t *testing.T) {
 }
 
 func TestCompactJsonBindings(t *testing.T) {
-	b := Bindings{
+	b := BindingList{
 		Binding{Name: "test", Value: BindingInt(42)},
 		Binding{Name: "test2", Value: BindingBool(true)},
 		Binding{Name: "test3", Value: BindingString("foo")},
@@ -75,7 +74,7 @@ func TestCompactJsonColumns(t *testing.T) {
 func TestMessageJson(t *testing.T) {
 	m := message{
 		Raw: "<13>Oct 22 12:34:56 myhostname myapp[1234]: This is a sample syslog message.",
-		Bindings: Bindings{
+		Bindings: BindingList{
 			Binding{Name: "test", Value: BindingInt(42)},
 			Binding{Name: "test2", Value: BindingBool(true)},
 			Binding{Name: "test3", Value: BindingString("foo")},
@@ -102,3 +101,29 @@ func TestSyslogParserRaw(t *testing.T) {
 	assert.Equal(t, "{\"fmt\":\"raw\",\"msg\":{\"raw\":\"\\u003c13\\u003eOct 22 12:34:56 myhostname myapp[1234]: This is a sample syslog message.\",\"bnd\":{},\"col\":[]}}", p.CompactJson())
 	fmt.Println(p.CompactJson())
 }
+
+// func TestSyslofSnipeStructuredData(t *testing.T) {
+
+// 	initial := WithState("<13>Oct 22 12:34:56 myhostname mypp[1234]: - [exampleSDID@32473 iut=\"3\" eventSource=\"Application\" eventID=\"1011\"] This is a sample syslog message. [test1=\"foo\" test2=\"bar\"]")
+// 	assert.Equal(t, 172, len(initial.remaining()))
+
+// 	snipes := initial.Snipe(func(r rune) bool {
+// 		return r == '['
+// 	})
+
+// 	structureDataParser := structureDataParser()
+// 	for _, s := range snipes {
+// 		fmt.Println(s.remaining())
+// 	}
+
+// 	Bindings := Bindings{
+// 		Binding{Name: "exampleSDID", Value: BindingString("exampleSDID@32473")},
+// 		Binding{Name: "iut", Value: BindingString("3")},
+// 		Binding{Name: "eventSource", Value: BindingString("Application")},
+// 		Binding{Name: "eventID", Value: BindingString("1011")},
+// 		Binding{Name: "test1", Value: BindingString("foo")},
+// 		Binding{Name: "test2", Value: BindingString("bar")},
+// 	}
+
+// 	assert.Equal(t, 6, len(Bindings))
+// }

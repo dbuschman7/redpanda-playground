@@ -59,7 +59,7 @@ var StringParser = GetString(ConsumeSome(IsAlphaNum))
 var AsciiParser = GetString(ConsumeSome(IsAsciiLetter))
 var WhitespaceSkipParser = ConsumeWhile(IsWhitespace)
 
-var NameParser = GetString(
+var EntityNameParser = GetString(
 	AndThen(
 		ConsumeIf(IsAsciiLetter),
 		func(Empty) Parser[Empty] {

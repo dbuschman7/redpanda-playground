@@ -1,11 +1,9 @@
-package syslog
+package parser
 
 import (
 	"encoding/json"
 	"fmt"
 	"unicode/utf8"
-
-	. "dave.internal/pkg/parser"
 )
 
 // RFC 3164 -
@@ -35,7 +33,7 @@ type tag struct {
 }
 
 type structureData struct {
-	Bindings Bindings
+	Bindings BindingList
 }
 
 type SyslogMetadata struct {
@@ -67,7 +65,7 @@ func (p Priority) CompactJson() string {
 	return fmt.Sprintf("{\"fac\":%d,\"sev\":%d}", p.Facility, p.Severity)
 }
 
-func CompactJsonBindings(b Bindings) string {
+func CompactJsonBindings(b BindingList) string {
 	var buffer string
 	for _, binding := range b {
 		if len(buffer) > 0 {
@@ -140,8 +138,11 @@ func PriorityParser() Parser[Priority] {
 }
 
 // ////////////////////////////////////
+// Major Assemblies
+// ////////////////////////////////////
+
 func Tag3164Parser() Parser[tag] {
-	w1 := StartKeeping(NameParser)
+	w1 := StartKeeping(EntityNameParser)
 	k1 := AppendSkipping(w1, Exactly("["))
 	w2 := AppendKeeping(k1, IntParser)
 	k2 := AppendSkipping(w2, Exactly("]"))
@@ -150,6 +151,24 @@ func Tag3164Parser() Parser[tag] {
 		return tag{AppName: appName, Pid: pid}
 	})
 }
+
+// func structureDataParser() Parser[structureData] {
+// 	w1 := StartSkipping(Exactly("["))
+// 	k1 := AppendKeeping(w1, NameParser())
+// 	w2 := AppendSkipping(k1, Exactly("@"))
+// 	k2 := AppendKeeping(w2, IntParser)
+// 	w3 := AppendSkipping(k2, Exactly(" "))
+// 	k3 := AppendKeeping(w3, BindingsParser())
+// 	w4 := AppendSkipping(k3, Exactly("]"))
+
+// 	return Apply3(w4, func(name string, id int, bindings Bindings) structureData {
+// 		sdName := Binding{Name: "sd-name", Value: BindingString(name)}
+// 		sdId := Binding{Name: "sd-id", Value: BindingInt(id)}
+
+// 		return structureData{Bindings: bindings + Bindings{sdName, sdId}}
+// 	})
+
+// }
 
 // ////////////////////////////////////
 

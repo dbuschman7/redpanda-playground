@@ -101,18 +101,18 @@ func TestWhitespaceSkipParser(t *testing.T) {
 }
 
 func TestNameParser(t *testing.T) {
-	r, err := Parse(NameParser, WithState("abc"))
+	r, err := Parse(EntityNameParser, WithState("abc"))
 	if err != nil {
 		t.Errorf("NameParser failed: %v", err)
 	}
 	assert.Equal(t, "abc", r)
 
-	_, err = Parse(NameParser, WithState("123"))
+	_, err = Parse(EntityNameParser, WithState("123"))
 	if err == nil {
 		t.Errorf("NameParser failed: %v", err)
 	}
 
-	r, err = Parse(NameParser, WithState("a1b2c3"))
+	r, err = Parse(EntityNameParser, WithState("a1b2c3"))
 	if err != nil {
 		t.Errorf("NameParser failed: %v", err)
 	}

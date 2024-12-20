@@ -1,9 +1,7 @@
-package delimited
+package parser
 
 import (
 	"testing"
-
-	. "dave.internal/pkg/parser"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +19,7 @@ var intBoolValue = OneOf(
 
 func TestDelimitedParserNameValueUseCase(t *testing.T) {
 
-	k1 := StartKeeping(NameParser)
+	k1 := StartKeeping(EntityNameParser)
 	s1 := AppendSkipping(k1, WhitespaceSkipParser)
 	s2 := AppendSkipping(s1, Exactly("="))
 	s3 := AppendSkipping(s2, WhitespaceSkipParser)
@@ -36,7 +34,7 @@ func TestDelimitedParserNameValueUseCase(t *testing.T) {
 		t.Errorf("DelimitedParser failed: %v", err)
 	}
 
-	assert.Equal(t, []Binding{
+	assert.Equal(t, BindingList{
 		{Name: "name3", Value: BindingBool(false)},
 		{Name: "name2", Value: BindingInt(123)},
 		{Name: "name1", Value: BindingBool(true)},
@@ -57,7 +55,7 @@ func TestCommaSeparatedValuesParser(t *testing.T) {
 		t.Errorf("DelimitedParser failed: %v", err)
 	}
 
-	assert.Equal(t, []Binding{
+	assert.Equal(t, BindingList{
 		{Value: BindingBool(false)},
 		{Value: BindingInt(4)},
 		{Value: BindingBool(true)},
@@ -80,7 +78,7 @@ func TestPipeSeparatedValuesParser(t *testing.T) {
 		t.Errorf("DelimitedParser failed: %v", err)
 	}
 
-	assert.Equal(t, []Binding{
+	assert.Equal(t, BindingList{
 		{Value: BindingBool(false)},
 		{Value: BindingInt(4)},
 		{Value: BindingBool(true)},
