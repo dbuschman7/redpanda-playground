@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"unicode/utf8"
 )
 
@@ -89,11 +88,11 @@ type StateList []State
 
 // snipe returns a list of states in which the next rune is equal to the
 // given rune.
-func (s State) Snipe(char rune) StateList {
+func (s State) Snipe(predicate func(rune) bool) StateList {
 	var states []State
 	for i := s.start; i < s.end; i++ {
 		//fmt.Printf("i: %d current: %v  looking for %v \n", i, s.data[i], char)
-		if s.data[i] == byte(char) {
+		if predicate(rune(s.data[i])) {
 			states = append(states, State{data: s.data, start: i, end: s.end})
 		}
 	}
@@ -107,18 +106,16 @@ func (s State) Tokenize(keepDelim bool, predicate func(rune) bool) StateList {
 
 	indexes = append(indexes, s.start)
 
-	lastSeen := s.start
 	for i := s.start; i < s.end; {
 		test := predicate(rune(s.data[i]))
-		fmt.Printf("i:%d   current:%v   test:%v    lastSeen:%v \n", i, s.data[i], test, lastSeen)
+		//	fmt.Printf("i:%d   current:%v   test:%v\n", i, s.data[i], test)
 		if test && i > s.start {
 			indexes = append(indexes, i)
 		}
 		i += 1
-		lastSeen = i
 	}
 	indexes = append(indexes, s.end)
-	fmt.Printf("indexes: %v \n", indexes)
+	// fmt.Printf("indexes: %v \n", indexes)
 
 	var states []State
 	for i := range len(indexes) - 1 {
@@ -126,7 +123,7 @@ func (s State) Tokenize(keepDelim bool, predicate func(rune) bool) StateList {
 		if !keepDelim {
 			state = state.trimLeadingPredicate(predicate)
 		}
-		fmt.Printf("state %v: '%v' \n", i, state.remaining())
+		// fmt.Printf("state %v: '%v' \n", i, state.remaining())
 		if state.length() > 0 {
 			states = append(states, state)
 		}

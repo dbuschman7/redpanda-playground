@@ -138,7 +138,7 @@ func TestStateConsumeHeadTail(t *testing.T) {
 func TestSnipe(t *testing.T) {
 	state := WithState("banana")
 	assert.Equal(t, "banana", state.remaining())
-	found := state.Snipe('a')
+	found := state.Snipe(func(r rune) bool { return 'a' == r })
 	assert.Equal(t, 3, len(found))
 	assert.Equal(t, "anana", found[0].remaining())
 	assert.Equal(t, "ana", found[1].remaining())
@@ -148,7 +148,7 @@ func TestSnipe(t *testing.T) {
 func TestSnipeEmpty(t *testing.T) {
 	state := WithState("banana")
 	assert.Equal(t, "banana", state.remaining())
-	found := state.Snipe('q')
+	found := state.Snipe(func(r rune) bool { return 'q' == r })
 	assert.Equal(t, 0, len(found))
 }
 
