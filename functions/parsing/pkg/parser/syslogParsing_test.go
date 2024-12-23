@@ -102,7 +102,7 @@ func TestSyslogParserRaw(t *testing.T) {
 	fmt.Println(p.CompactJson())
 }
 
-// func TestSyslofSnipeStructuredData(t *testing.T) {
+// func TestSyslogSnipeStructuredData(t *testing.T) {
 
 // 	initial := WithState("<13>Oct 22 12:34:56 myhostname mypp[1234]: - [exampleSDID@32473 iut=\"3\" eventSource=\"Application\" eventID=\"1011\"] This is a sample syslog message. [test1=\"foo\" test2=\"bar\"]")
 // 	assert.Equal(t, 172, len(initial.remaining()))
@@ -111,19 +111,27 @@ func TestSyslogParserRaw(t *testing.T) {
 // 		return r == '['
 // 	})
 
-// 	structureDataParser := structureDataParser()
+// 	parser := structureDataParser()
+
 // 	for _, s := range snipes {
 // 		fmt.Println(s.remaining())
+// 		p, err := Parse(parser, s)
+// 		if err == nil {
+// 			fmt.Println(p.CompactJson())
+// 		} else {
+// 			fmt.Printf("Err %v\n", err)
+// 		}
+// 		fmt.Println()
 // 	}
 
-// 	Bindings := Bindings{
-// 		Binding{Name: "exampleSDID", Value: BindingString("exampleSDID@32473")},
-// 		Binding{Name: "iut", Value: BindingString("3")},
-// 		Binding{Name: "eventSource", Value: BindingString("Application")},
-// 		Binding{Name: "eventID", Value: BindingString("1011")},
-// 		Binding{Name: "test1", Value: BindingString("foo")},
-// 		Binding{Name: "test2", Value: BindingString("bar")},
-// 	}
+// 	// 	Bindings := Bindings{
+// 	// 		Binding{Name: "exampleSDID", Value: BindingString("exampleSDID@32473")},
+// 	// 		Binding{Name: "iut", Value: BindingString("3")},
+// 	// 		Binding{Name: "eventSource", Value: BindingString("Application")},
+// 	// 		Binding{Name: "eventID", Value: BindingString("1011")},
+// 	// 		Binding{Name: "test1", Value: BindingString("foo")},
+// 	// 		Binding{Name: "test2", Value: BindingString("bar")},
+// 	// 	}
 
-// 	assert.Equal(t, 6, len(Bindings))
+// 	// assert.Equal(t, 6, len(Bindings))
 // }

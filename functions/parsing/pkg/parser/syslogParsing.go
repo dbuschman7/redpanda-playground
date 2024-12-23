@@ -152,23 +152,39 @@ func Tag3164Parser() Parser[tag] {
 	})
 }
 
-// func structureDataParser() Parser[structureData] {
-// 	w1 := StartSkipping(Exactly("["))
-// 	k1 := AppendKeeping(w1, NameParser())
-// 	w2 := AppendSkipping(k1, Exactly("@"))
-// 	k2 := AppendKeeping(w2, IntParser)
-// 	w3 := AppendSkipping(k2, Exactly(" "))
-// 	k3 := AppendKeeping(w3, BindingsParser())
-// 	w4 := AppendSkipping(k3, Exactly("]"))
+var sdNameParser = GetString(ConsumeSome(func(r rune) bool {
+	return r != '@' && r != ']' && !IsWhitespace(r)
+}))
 
-// 	return Apply3(w4, func(name string, id int, bindings Bindings) structureData {
-// 		sdName := Binding{Name: "sd-name", Value: BindingString(name)}
-// 		sdId := Binding{Name: "sd-id", Value: BindingInt(id)}
+var sdBindindsListParser = ConusmeBindingUntil(BindingParser(), rune(']'))
 
-// 		return structureData{Bindings: bindings + Bindings{sdName, sdId}}
-// 	})
+func structureDataParser() Parser[structureData] {
+	w1 := StartSkipping(Exactly("["))
+	k1 := AppendKeeping(w1, sdNameParser)
+	w2 := AppendSkipping(k1, Exactly("@"))
+	k2 := AppendKeeping(w2, IntParser)
+	w3 := AppendSkipping(k2, Exactly(" "))
+	w4 := AppendSkipping(w3, WhitespaceSkipParser)
+	k3 := AppendKeeping(w4, sdBindindsListParser)
+	w5 := AppendSkipping(k3, Exactly("]"))
 
-// }
+	return Apply3(w5, func(name string, id int, bindings BindingList) structureData {
+		sdName := Binding{Name: "sd-name", Value: BindingString(name)}
+		sdId := Binding{Name: "sd-id", Value: BindingInt(id)}
+		fmt.Printf("name: %v %v\n", name, id)
+
+		list := bindings
+		list = append(list, sdName)
+		list = append(list, sdId)
+
+		for _, b := range bindings {
+			fmt.Printf("binding: %v\n", b)
+		}
+
+		return structureData{Bindings: list}
+	})
+
+}
 
 // ////////////////////////////////////
 

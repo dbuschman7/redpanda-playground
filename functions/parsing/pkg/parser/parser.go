@@ -167,6 +167,16 @@ func Exactly(token string) Parser[Empty] {
 	}
 }
 
+func NextRune(next rune) Parser[Empty] {
+	return func(initial State) (Empty, State, error) {
+		r, nextHead := initial.nextHeadRune()
+		if r != next {
+			return Empty{}, initial, ErrNoMatch
+		}
+		return Empty{}, nextHead, nil
+	}
+}
+
 // GetString[T] generates a Parser[string] which succeeds exactly when the parser argument
 // succeeds; on success it returns the slice of the input string matched by parser.
 func GetString[T any](parser Parser[T]) Parser[string] {

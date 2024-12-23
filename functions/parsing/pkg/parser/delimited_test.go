@@ -35,9 +35,9 @@ func TestDelimitedParserNameValueUseCase(t *testing.T) {
 	}
 
 	assert.Equal(t, BindingList{
-		{Name: "name3", Value: BindingBool(false)},
-		{Name: "name2", Value: BindingInt(123)},
 		{Name: "name1", Value: BindingBool(true)},
+		{Name: "name2", Value: BindingInt(123)},
+		{Name: "name3", Value: BindingBool(false)},
 	}, r)
 }
 
@@ -56,11 +56,11 @@ func TestCommaSeparatedValuesParser(t *testing.T) {
 	}
 
 	assert.Equal(t, BindingList{
-		{Value: BindingBool(false)},
-		{Value: BindingInt(4)},
-		{Value: BindingBool(true)},
-		{Value: BindingInt(2)},
 		{Value: BindingInt(1)},
+		{Value: BindingInt(2)},
+		{Value: BindingBool(true)},
+		{Value: BindingInt(4)},
+		{Value: BindingBool(false)},
 	}, r)
 }
 
@@ -79,10 +79,10 @@ func TestPipeSeparatedValuesParser(t *testing.T) {
 	}
 
 	assert.Equal(t, BindingList{
-		{Value: BindingBool(false)},
-		{Value: BindingInt(4)},
-		{Value: BindingBool(true)},
-		{Value: BindingInt(2)},
 		{Value: BindingInt(1)},
+		{Value: BindingInt(2)},
+		{Value: BindingBool(true)},
+		{Value: BindingInt(4)},
+		{Value: BindingBool(false)},
 	}, r)
 }

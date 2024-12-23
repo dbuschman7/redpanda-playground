@@ -124,3 +124,37 @@ func TestBindingParser(t *testing.T) {
 	assert.Equal(t, "quux", p.Name)
 	assert.Equal(t, BindingString("quuz"), p.Value)
 }
+
+func TestBindingsParser(t *testing.T) {
+	p, err := Parse(BindingsParser(','), WithState("foo=42, bar=true, baz=\"\\'qux\", quux=quuz"))
+	assert.Nil(t, err)
+	assert.NotNil(t, p)
+
+	assert.Equal(t, BindingList{
+		{
+			Name:  "foo",
+			Value: BindingInt(42),
+		},
+		{
+			Name:  "bar",
+			Value: BindingBool(true),
+		},
+		{
+			Name:  "baz",
+			Value: BindingString("\\'qux"),
+		},
+		{
+			Name:  "quux",
+			Value: BindingString("quuz"),
+		},
+	}, p)
+}
+
+// func TestSpaceDelimitedValuesParser(t *testing.T) {
+// 	msg := "iut=\"3\" eventSource=\"Application\" eventID=\"1011\""
+
+// 	p, err := Parse(BindingsParser(' '), WithState(msg))
+// 	assert.Nil(t, err)
+// 	assert.NotNil(t, p)
+
+// }

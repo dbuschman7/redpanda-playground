@@ -58,6 +58,7 @@ var NumberStringParser = AndThen(
 var StringParser = GetString(ConsumeSome(IsAlphaNum))
 var AsciiParser = GetString(ConsumeSome(IsAsciiLetter))
 var WhitespaceSkipParser = ConsumeWhile(IsWhitespace)
+var SkipTheRest = ConsumeWhile(func(r rune) bool { return true })
 
 var EntityNameParser = GetString(
 	AndThen(
