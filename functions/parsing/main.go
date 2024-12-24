@@ -89,13 +89,15 @@ func multilineParser() process {
 		lines = []string{data}
 		defer func() {
 			if e := recover(); e != nil {
-				fmt.Fprintf(os.Stderr, "panic occurred: %v\n", e)
+				// cannot output when in subprocess mode
+				// fmt.Fprintf(os.Stderr, "panic occurred: %v\n", e)
 			}
 		}()
 
 		b, _, err := p(parser.WithState(data))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error occurred: %v\n", err)
+			// cannot output when in subprocess mode
+			// fmt.Fprintf(os.Stderr, "error occurred: %v\n", err)
 			return lines, err
 		}
 		lines = b
@@ -106,7 +108,7 @@ func multilineParser() process {
 
 func main() {
 	args := os.Args
-	fmt.Fprintf(os.Stderr, "Args(%v) %v \n", len(args), args)
+	// fmt.Fprintf(os.Stderr, "Args(%v) %v \n", len(args), args)
 
 	switch len(args) {
 	case 1:
