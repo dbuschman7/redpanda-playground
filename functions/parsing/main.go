@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -14,7 +13,7 @@ import (
 )
 
 type convert func(string) (parser.BindingList, error)
-type process func(string) ([]string, error)
+type process func(string) (lines []string, err error)
 
 var buffer bytes.Buffer
 
@@ -70,14 +69,6 @@ func doTransform(e transform.WriteEvent, w transform.RecordWriter) error {
 	return w.Write(e.Record())
 }
 
-func encode(in string) string {
-	byt, err := json.Marshal(in)
-	if err != nil {
-		return ""
-	}
-	return string(byt)
-}
-
 func multilineParser() process {
 
 	w1 := parser.StartSkipping(parser.Exactly("<"))
@@ -94,12 +85,22 @@ func multilineParser() process {
 
 	p := parser.MultilineParser('<', predicate)
 
-	return func(data string) ([]string, error) {
+	return func(data string) (lines []string, err error) {
+		lines = []string{data}
+		defer func() {
+			if e := recover(); e != nil {
+				fmt.Fprintf(os.Stderr, "panic occurred: %v\n", e)
+			}
+		}()
+
 		b, _, err := p(parser.WithState(data))
 		if err != nil {
-			return []string{}, err
+			fmt.Fprintf(os.Stderr, "error occurred: %v\n", err)
+			return lines, err
 		}
-		return b, nil
+		lines = b
+
+		return lines, nil
 	}
 }
 
