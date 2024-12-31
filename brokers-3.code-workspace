@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../redpanda/brokers-3"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../../github/redpanda-labs"
+		}
+	],
+	"settings": {}
+}

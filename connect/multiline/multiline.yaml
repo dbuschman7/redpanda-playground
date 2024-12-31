@@ -9,7 +9,8 @@ input:
 
 pipeline:
   processors:
-    - mapping: root = content()
+    - mapping: |
+        root = content()
 
 output:
   stdout: {}
