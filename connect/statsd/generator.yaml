@@ -1,0 +1,25 @@
+input:
+  label: ""
+  generate:
+    mapping: |
+      this.ts    = now()
+      this.value = random_int(max:20)
+    interval: 1s
+    count: 0
+    batch_size: 1
+    auto_replay_nacks: true
+
+pipeline:
+  processors:
+    - mapping: |
+        root = content().string()
+
+buffer:
+  system_window:
+    timestamp_mapping: root = now()
+    size: 5s
+    slide: 4999ms
+    allowed_lateness: 0s
+
+output:
+  stdout: {}
