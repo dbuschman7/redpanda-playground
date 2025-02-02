@@ -5,6 +5,7 @@ volumes:
   redpanda-0: null
   redpanda-1: null
   redpanda-2: null
+  prom_data: null
 services:
   redpanda-0:
     command:
@@ -133,3 +134,31 @@ services:
       - ./swagger:/swagger
     depends_on:
       - redpanda-0
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    networks:
+      - redpanda_network  
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    networks:
+      - redpanda_network      
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+
+
