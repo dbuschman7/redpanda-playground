@@ -1,9 +1,0 @@
-http:
-  enabled: true
-  address: 0.0.0.0:${ADMIN_PORT}
-  root_path: /connect
-  debug_endpoints: true 
-  
-metrics:
-  prometheus: {}
-  mapping: ""  
