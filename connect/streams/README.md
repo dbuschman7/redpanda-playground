@@ -12,12 +12,13 @@ Store and forward standard processing using Redpanda Connect
 
 ```mermaid
 flowchart TD
-    A[UDP] -->|Batch 3s| B(Send Batch)
-    B --> C{Fan Out}
-    C --> H{Round Robin}
-    C --> S{Round Robin}
-    H -->|Sqlite DB| D[Cluster 1]
-    H -->|Sqlite DB| J[Cluster 1]
+    A[Generator] -->|1 second| C[Socket]
+    C --> H[UDP] -->|Batch - 3 seconds| K(Send Batch)
+    K --> M{Fan Out}
+    M --> N{Round Robin}
+    M --> S{Round Robin}
+    N -->|Sqlite DB| D[Cluster 1]
+    N -->|Sqlite DB| J[Cluster 1]
     S -->|Sqlite DB| E[Cluster 2]
     S -->|Sqlite DB| L[Cluster 2]
 ```

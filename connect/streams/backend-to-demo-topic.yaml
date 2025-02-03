@@ -1,0 +1,48 @@
+input:
+  label: "inproc_backend"
+  inproc: "demo_inproc"
+
+pipeline:
+  threads: 10
+  processors:
+    - mapping: |
+        root = content()
+        if (content().length() > 10654860) {
+          root = content().slice(0, 10654860)
+        }
+
+output:
+  label: "cluster1_topic_demo"
+  kafka_franz:
+    seed_brokers:
+      - 127.0.0.1:19092
+      - 127.0.0.1:29092
+      - 127.0.0.1:39092
+    topic: "cluster1_topic_demo" # No default (required)
+    key: "" # No default (optional)
+    partitioner: "least_backup"
+    client_id: connect_backend_2
+    rack_id: "localhost"
+    idempotent_write: true
+    metadata:
+      include_prefixes: []
+      include_patterns: []
+    max_in_flight: 10
+    timeout: 10s
+    batching:
+      count: 500
+      byte_size: 10654860
+      period: "3s"
+      check: ""
+      processors: [] # No default (optional)
+    max_message_bytes: 100000000
+    compression: "snappy" # No default (optional)
+    tls:
+      enabled: false
+      skip_cert_verify: false
+      enable_renegotiation: false
+      root_cas: ""
+      root_cas_file: ""
+      client_certs: []
+    sasl: [] # No default (optional)
+    timestamp: ${! timestamp_unix() }

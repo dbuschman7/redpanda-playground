@@ -2,8 +2,35 @@ http:
   enabled: true
   address: 0.0.0.0:${ADMIN_PORT}
   root_path: /connect
-  debug_endpoints: true 
-  
+  debug_endpoints: true
+
+logger:
+  level: DEBUG
+  format: logfmt
+  add_timestamp: true
+  timestamp_name: time
+  level_name: level
+  message_name: msg
+  static_fields:
+    "@service": "${SERVICE_NAME}"
+
 metrics:
-  prometheus: {}
-  mapping: ""  
+  prometheus:
+    use_histogram_timing: false
+    histogram_buckets: []
+    summary_quantiles_objectives:
+      - quantile: 0.5
+        error: 0.05
+      - quantile: 0.9
+        error: 0.01
+      - quantile: 0.99
+        error: 0.001
+    add_process_metrics: true
+    add_go_metrics: true
+  mapping: ""
+
+tracer:
+  none: {}
+
+shutdown_delay: 3s
+shutdown_timeout: 20s

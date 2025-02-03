@@ -1,0 +1,19 @@
+input:
+  label: "ping_generator"
+  generate:
+    mapping: |
+      root.ts = now()
+      root.unix = timestamp_unix()
+    interval: 1s
+    count: 0
+    batch_size: 8
+    auto_replay_nacks: true
+
+pipeline:
+  processors:
+    - mapping: |
+        root = this
+
+output:
+  label: "inproc"
+  inproc: "demo_inproc"

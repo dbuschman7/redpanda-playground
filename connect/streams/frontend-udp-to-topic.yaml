@@ -1,0 +1,72 @@
+input:
+  label: "udp_port"
+  socket_server:
+    network: "udp"
+    address: "127.0.0.1:${UDP_PORT}"
+    address_cache: "3s"
+    auto_replay_nacks: false # performance
+    scanner:
+      re_match:
+        pattern: <\d+>
+        max_buffer_size: 10655360
+buffer:
+  memory:
+    limit: 53276800
+    batch_policy:
+      enabled: true
+      period: "3s"
+      count: 3
+
+pipeline:
+  threads: 10
+  processors:
+    - mapping: |
+        root.meta.id          = counter()
+        root.meta.received_at = now()
+        root.meta.host        = hostname()
+        root.data.length      = content().length()
+        root.data.original    = content().string().trim() 
+        root.data.format      = "string"
+        if content().length() > 10654860 {
+          root.data.original = content().string().slice(0, 10654860)
+        }
+        if (root.data.original.has_prefix("{") && root.data.original.has_suffix("}")) { 
+          root.data.original = this
+          root.data.format = "json"
+        }
+
+output:
+  label: "cluster2_udp_topic"
+  kafka_franz:
+    seed_brokers:
+      - 127.0.0.1:19092
+      - 127.0.0.1:29092
+      - 127.0.0.1:39092
+    topic: "cluster2_udp_topic" # No default (required)
+    key: "" # No default (optional)
+    partitioner: "least_backup"
+    client_id: connect_backend_2
+    rack_id: "localhost"
+    idempotent_write: true
+    metadata:
+      include_prefixes: []
+      include_patterns: []
+    max_in_flight: 10
+    timeout: 10s
+    batching:
+      count: 500
+      byte_size: 10654860
+      period: "3s"
+      check: ""
+      processors: [] # No default (optional)
+    max_message_bytes: 100000000
+    compression: "snappy" # No default (optional)
+    tls:
+      enabled: false
+      skip_cert_verify: false
+      enable_renegotiation: false
+      root_cas: ""
+      root_cas_file: ""
+      client_certs: []
+    sasl: [] # No default (optional)
+    timestamp: ${! timestamp_unix() }
