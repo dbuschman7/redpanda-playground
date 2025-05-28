@@ -1,0 +1,62 @@
+#
+http:
+  enabled: true
+  address: 0.0.0.0:4195
+  root_path: /connect
+  debug_endpoints:
+
+#
+input:
+  file:
+    paths: [./input]
+    scanner:
+      re_match:
+        pattern: <\d+>
+        max_buffer_size: 65536
+#
+pipeline:
+  processors:
+    - mapping: |
+        data.raw = content().slice(0, 10)
+        meta.hosts = content().re_find_all("[dg][[amec][vzn]t[a-z][a-z][a-z]-[a-z][a-z][a-z][a-z]")
+    - mapping: |
+        if meta.hosts.length() == 0 { 
+          meta.hostname = "unknown" 
+          meta.first = "unk"
+          meta.middle = "unk"
+          meta.last = "unk"
+        } else { 
+          meta.hostname = meta.hosts.index(0) 
+          meta.first = meta.hosts.index(0).slice(0, 3)
+          meta.middle = meta.hosts.index(0).slice(4, 7)
+          meta.last = meta.hosts.index(0).slice(8, 12)
+        }
+    - metric:
+        type: counter
+        name: messages
+        labels:
+          host: ${! json("meta.hostname") }
+          first: ${! json("meta.first") }
+          middle: ${! json("meta.middle") }
+          last: ${! json("meta.last") }
+        value: 1
+    - sleep:
+        duration: "30s"
+#
+output:
+  stdout: {}
+#
+metrics:
+  prometheus:
+    use_histogram_timing: false
+    histogram_buckets: []
+    summary_quantiles_objectives:
+      - quantile: 0.5
+        error: 0.05
+      - quantile: 0.9
+        error: 0.01
+      - quantile: 0.99
+        error: 0.001
+    add_process_metrics: true
+    add_go_metrics: true
+  mapping: ""
